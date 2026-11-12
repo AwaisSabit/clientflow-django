@@ -1,0 +1,31 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets and local config
+.env
+!.env.example
+
+# Local database (dev default is SQLite; production uses PostgreSQL)
+db.sqlite3
+db.sqlite3-journal
+
+# Django
+staticfiles/
+media/
+*.log
+local_settings.py
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
