@@ -14,9 +14,15 @@ invoices in separate documents. ClientFlow puts the four together in one
 simple, tested app with per-user access control, so one user cannot see
 another user's clients, projects, tasks or invoices.
 
+## Features that work now
+
+- Registration, login and logout, with a username, email and display name
+- Home page and health check
+- Responsive Bootstrap 5 interface
+
 ## Features planned (MVP)
 
-1. Registration, login, logout, password reset and profile
+1. Password reset and profile
 2. Role-aware access: owner/admin and regular team member
 3. Client CRUD with contact details and notes
 4. Project CRUD linked to clients
@@ -26,9 +32,8 @@ another user's clients, projects, tasks or invoices.
 7. Dashboard with project/task/invoice summaries
 8. Search, filtering, pagination and useful empty states
 9. CSV export for invoices or clients
-10. Responsive Bootstrap 5 interface
-11. Validation, authorization checks and tests throughout
-12. Setup guide and sample/demo data command
+10. Validation, authorization checks and tests throughout
+11. Setup guide and sample/demo data command
 
 Out of scope for v1.0.0: payment gateway integration, complex accounting,
 multi-currency tax compliance, mobile app, enterprise multi-tenant billing.
@@ -93,14 +98,14 @@ clientflow-django/
 │       ├── dev.py
 │       └── prod.py
 ├── apps/
-│   ├── accounts/      # custom User model, auth to follow
+│   ├── accounts/      # custom User model, registration, login and logout
 │   ├── clients/       # Client model + CRUD
 │   ├── projects/      # Project model + CRUD
 │   ├── tasks/         # Task model + CRUD
 │   └── billing/       # Invoice models + views
-├── templates/         # base.html (Bootstrap 5), home.html
+├── templates/         # base.html (Bootstrap 5), home.html, accounts/
 ├── static/            # css/main.css
-├── tests/             # smoke tests for home + health pages
+├── tests/             # tests for home, health and auth pages
 ├── .env.example
 ├── .gitignore
 ├── docker-compose.yml # PostgreSQL 16 for local use
@@ -111,8 +116,8 @@ clientflow-django/
 
 ## Limitations
 
-- Home page and health endpoint only — no auth, no client/project/task/
-  invoice features yet.
+- Home page, health check and sign-in pages only — no client/project/task/
+  invoice features yet. Password reset and profile pages are not built yet.
 - Bootstrap is loaded from a CDN, so the pages need internet access for
   full styling; the app itself still renders without it.
 - No CI workflow yet.

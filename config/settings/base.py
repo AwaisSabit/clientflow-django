@@ -103,6 +103,11 @@ ASGI_APPLICATION = "config.asgi.application"
 # use a custom user only if implemented at the beginning).
 AUTH_USER_MODEL = "accounts.User"
 
+# Auth redirects: after login or logout, send the user to the home page.
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

@@ -42,3 +42,53 @@ is the same scope, so Day 2 moves to the Day 3 work: authentication —
 registration, login, logout — using the custom user model, plus auth
 tests. Also: connect GitHub (user action) so Day 2 work can be pushed
 to the `clientflow-django` repository.
+
+## Day 2 — 2026-11-13 (ClientFlow)
+
+### Done
+- Registration, login and logout, built on Django's built-in auth and
+  the existing custom `accounts.User` model (no model change, so no new
+  migration was needed):
+  - `apps/accounts/forms.py` — `RegistrationForm` (username, email,
+    display name, password twice, email required) and `LoginForm`,
+    both with Bootstrap styling on every field.
+  - `apps/accounts/views.py` — `register` saves a new user, signs
+    them in straight away and sends them to the home page;
+    `logout_view` signs the user out and returns them home.
+  - `apps/accounts/urls.py` — `/accounts/register/`,
+    `/accounts/login/` (Django's `LoginView`) and `/accounts/logout/`.
+  - `config/urls.py` includes the accounts URLs; `config/settings/base.py`
+    sets `LOGIN_URL`, `LOGIN_REDIRECT_URL` and `LOGOUT_REDIRECT_URL`
+    to send users home after signing in or out.
+  - `templates/accounts/register.html` and `templates/accounts/login.html`
+    extend `base.html` with Bootstrap forms and error messages.
+  - `templates/base.html` navigation now shows "Log in" and
+    "Create an account" to visitors, and "Hi, <display name>" plus
+    "Log out" to signed-in users.
+- README updated: registration, login and logout moved to
+  "Features that work now"; the limitations now say the sign-in pages
+  work but password reset and profile pages are not built yet. No day
+  numbers anywhere in the README.
+
+### Test results (Day 2)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 10 tests, all passed (2 home/health smoke
+  tests + 8 new auth tests in `tests/test_auth.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: the register page loads; registration creates a user
+  (username, email, display name, working password) and signs them in;
+  mismatched passwords do not create a user; the login page loads; login
+  works with good details and fails with a wrong password; the navigation
+  shows "Log out" and the user's display name when signed in; logout
+  signs the user out and the navigation shows "Log in" again.
+- Also verified by hand in the dev shell before committing: register →
+  signed in and the home page greets the user by name; logout → signed
+  out; wrong password → still signed out; good password → signed in.
+
+### Commits (local only)
+- See `git log` in the project repo (2 real commits, in plain English).
+
+### Next steps
+- Profile page and password reset flow (the next auth work in the plan).
+- Then client records (Client model + CRUD).
