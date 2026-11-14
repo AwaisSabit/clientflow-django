@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Your clients — ClientFlow{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Your clients</h1>
+  <a class="btn btn-primary" href="{% url 'clients:create' %}">Add a client</a>
+</div>
+{% if clients %}
+  <div class="list-group">
+    {% for client in clients %}
+      <a href="{% url 'clients:detail' client.pk %}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h2 class="h5 mb-1">{{ client.name }}</h2>
+          {% if client.company %}<small class="text-muted">{{ client.company }}</small>{% endif %}
+        </div>
+        {% if client.email %}<small class="text-muted">{{ client.email }}</small>{% endif %}
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-muted">No clients yet. Add your first client to keep their contact details in one place.</p>
+{% endif %}
+{% endblock %}

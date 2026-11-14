@@ -19,22 +19,24 @@ another user's clients, projects, tasks or invoices.
 - Registration, login and logout, with a username, email and display name
 - Profile page: see your details and update your display name and email
 - Password reset by email (reset links print to the console in development)
+- Client records: add, view, edit and delete your own clients, with
+  name, email, phone, company and notes — a user can never see, edit or
+  delete another user's clients
 - Home page and health check
 - Responsive Bootstrap 5 interface
 
 ## Features planned (MVP)
 
 1. Role-aware access: owner/admin and regular team member
-2. Client CRUD with contact details and notes
-3. Project CRUD linked to clients
-4. Task management with status, priority, due date and assignee
-5. Invoice creation with line items, subtotal, tax/discount, total, due date
+2. Project CRUD linked to clients
+3. Task management with status, priority, due date and assignee
+4. Invoice creation with line items, subtotal, tax/discount, total, due date
    and status
-6. Dashboard with project/task/invoice summaries
-7. Search, filtering, pagination and useful empty states
-8. CSV export for invoices or clients
-9. Validation, authorization checks and tests throughout
-10. Setup guide and sample/demo data command
+5. Dashboard with project/task/invoice summaries
+6. Search, filtering, pagination and useful empty states
+7. CSV export for invoices or clients
+8. Validation, authorization checks and tests throughout
+9. Setup guide and sample/demo data command
 
 Out of scope for v1.0.0: payment gateway integration, complex accounting,
 multi-currency tax compliance, mobile app, enterprise multi-tenant billing.
@@ -117,8 +119,8 @@ clientflow-django/
 
 ## Limitations
 
-- Home page, health check and sign-in pages only — no client/project/task/
-  invoice features yet.
+- Home page, health check, sign-in pages and client records only — no
+  project/task/invoice features yet.
 - Bootstrap is loaded from a CDN, so the pages need internet access for
   full styling; the app itself still renders without it.
 - No CI workflow yet.

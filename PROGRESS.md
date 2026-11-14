@@ -142,3 +142,56 @@ to the `clientflow-django` repository.
 
 ### Next steps
 - Client records (Client model + CRUD), per the plan.
+
+## Day 4 — 2026-11-14 (ClientFlow)
+
+### Done
+- Client model in `apps/clients/models.py`: name, email, phone, company,
+  notes, owner (foreign key to the custom User, related name `clients`)
+  and created/updated timestamps. `__str__` returns the name; clients
+  order by name. Migration `apps/clients/migrations/0001_initial.py`.
+  Registered in admin with list display, owner filter and search.
+- Full CRUD, all login required and owner-only:
+  - `apps/clients/views.py` — list (`/clients/`, only the signed-in
+    user's own clients, ordered by name), detail, create, update and
+    delete. Every lookup filters on `owner=request.user`, so a client
+    belonging to someone else answers with a 404 — never a permission
+    page and never the other user's data. Create sets the owner to the
+    signed-in user; successful create/update/delete show a message.
+  - `apps/clients/forms.py` — `ClientForm` (ModelForm with Bootstrap
+    styling on every field).
+  - `apps/clients/urls.py` — `/clients/`, `/clients/add/`,
+    `/clients/<pk>/`, `/clients/<pk>/edit/`, `/clients/<pk>/delete/`,
+    wired into `config/urls.py`.
+  - Templates under `templates/clients/` extending `base.html`:
+    `list.html` (with a "No clients yet" empty state), `detail.html`,
+    `form.html` (shared by create and edit), `confirm_delete.html`.
+  - `templates/base.html` — "Clients" link in the nav for signed-in
+    users.
+- README updated: client records moved to "Features that work now";
+  the planned list and limitations now match the current state. No day
+  numbers anywhere in the README.
+
+### Test results (Day 4)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 36 tests, all passed (19 existing + 17 new
+  in `tests/test_clients.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: the list redirects anonymous users to login; the
+  empty list shows "No clients yet"; the list shows only the signed-in
+  user's clients and hides the other user's; the list is ordered by
+  name; the nav shows a Clients link when signed in; creating a client
+  saves it under the signed-in user and redirects to its detail page;
+  creating without a name saves nothing; the detail page shows the
+  client's details; detail, update and delete of another user's client
+  all answer with a 404 and change nothing; updating saves the changes;
+  delete asks for confirmation, then removes the client and returns to
+  the list; `str(client)` returns the name; the owner relationship
+  works from the user side.
+
+### Commits (local only)
+- See `git log` in the project repo (3 real commits, in plain English).
+
+### Next steps
+- Project records (Project model + CRUD, linked to clients), per the plan.

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ client.name }} — ClientFlow{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h1 class="h3 mb-3">Delete {{ client.name }}?</h1>
+    <p>This will permanently delete this client{% if client.company %} from {{ client.company }}{% endif %}. This cannot be undone.</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, delete this client</button>
+      <a class="btn btn-outline-secondary" href="{% url 'clients:detail' client.pk %}">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
