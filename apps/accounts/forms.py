@@ -1,4 +1,4 @@
-"""Forms for the accounts app: registration on top of the custom User."""
+"""Forms for the accounts app: registration, login and profile."""
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -21,6 +21,20 @@ class RegistrationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ("username", "email", "display_name")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].required = True
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "form-control")
+
+
+class ProfileForm(forms.ModelForm):
+    """Update the signed-in user's display name and email."""
+
+    class Meta:
+        model = User
+        fields = ("display_name", "email")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

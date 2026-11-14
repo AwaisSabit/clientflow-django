@@ -18,7 +18,7 @@
       {% endfor %}
       <button type="submit" class="btn btn-primary">Log in</button>
     </form>
-    <p class="mt-3">No account yet? <a href="{% url 'accounts:register' %}">Create one</a>.</p>
+    <p class="mt-3">No account yet? <a href="{% url 'accounts:register' %}">Create one</a>. <a href="{% url 'accounts:password_reset' %}">Forgot your password?</a></p>
   </div>
 </div>
 {% endblock %}

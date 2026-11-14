@@ -92,3 +92,53 @@ to the `clientflow-django` repository.
 ### Next steps
 - Profile page and password reset flow (the next auth work in the plan).
 - Then client records (Client model + CRUD).
+
+## Day 3 — 2026-11-14 (ClientFlow)
+
+### Done
+- Profile page at `/accounts/profile/` (login required): shows the
+  signed-in user's username, email, display name and date joined, with
+  a form to update the display name and email.
+  - `apps/accounts/forms.py` — new `ProfileForm`, a ModelForm on the
+    custom User model with Bootstrap styling.
+  - `apps/accounts/views.py` — new `profile` view (login required,
+    saves on POST and shows a success message).
+  - `templates/accounts/profile.html` — details plus the update form.
+  - `templates/base.html` — "Profile" link in the nav for signed-in
+    users, a messages area so the success notice shows, and the stale
+    footer line fixed (it still carried a day number; now a plain
+    sentence about clients, projects, tasks and invoices arriving).
+- Password reset flow using Django's built-in views:
+  `/accounts/password-reset/`, `/accounts/password-reset/done/`,
+  `/accounts/reset/<uidb64>/<token>/` and `/accounts/reset/done/`,
+  with four matching templates under `templates/accounts/` extending
+  `base.html` with Bootstrap styling. The login page now links to
+  "Forgot your password?". `config/settings/dev.py` sets the console
+  email backend so reset links print to the console in development
+  (`prod.py` untouched).
+- README updated: password reset and profile moved to "Features that
+  work now"; the limitations now match the current state. No day
+  numbers anywhere in the README.
+
+### Test results (Day 3)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 19 tests, all passed (10 existing + 9 new
+  in `tests/test_profile.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: profile redirects anonymous users to login; a
+  signed-in user sees their username, email, display name and date
+  joined; updating the display name saves it; the nav shows a Profile
+  link when signed in; the login page links to password reset; the
+  reset page loads; posting a registered email sends exactly one email
+  and redirects to the done page; posting an unregistered email still
+  redirects but sends no email; the full reset flow end to end
+  (extract the link from the sent email, open it, set a new password,
+  then log in with the new password — and the old password no longer
+  works).
+
+### Commits (local only)
+- See `git log` in the project repo (2 real commits, in plain English).
+
+### Next steps
+- Client records (Client model + CRUD), per the plan.
