@@ -7,10 +7,14 @@ with a 404, never a permission page and never the other user's data.
 """
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ClientForm
 from .models import Client
+
+CLIENTS_PER_PAGE = 10
 
 
 def _get_client(request, pk):
@@ -20,8 +24,57 @@ def _get_client(request, pk):
 
 @login_required
 def client_list(request):
-    clients = Client.objects.filter(owner=request.user).order_by("name")
-    return render(request, "clients/list.html", {"clients": clients})
+    """List the signed-in user's clients, with search, company filter
+    and pagination.
+
+    `q` searches name, company and email (case-insensitive); `company`
+    narrows the list to one company. Both filters only ever see the
+    signed-in user's own clients, and the page links keep them.
+    """
+    own_clients = Client.objects.filter(owner=request.user)
+    search_query = request.GET.get("q", "").strip()
+    company_filter = request.GET.get("company", "").strip()
+
+    clients = own_clients.order_by("name")
+    if search_query:
+        clients = clients.filter(
+            Q(name__icontains=search_query)
+            | Q(company__icontains=search_query)
+            | Q(email__icontains=search_query)
+        )
+    if company_filter:
+        clients = clients.filter(company=company_filter)
+
+    companies = (
+        own_clients.exclude(company="")
+        .values_list("company", flat=True)
+        .distinct()
+        .order_by("company")
+    )
+
+    paginator = Paginator(clients, CLIENTS_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    # The page links need the current search and filter, but not the
+    # page number itself.
+    kept_params = request.GET.copy()
+    kept_params.pop("page", None)
+    query_string = kept_params.urlencode()
+
+    return render(
+        request,
+        "clients/list.html",
+        {
+            "clients": page_obj,
+            "page_obj": page_obj,
+            "has_clients": own_clients.exists(),
+            "total_count": paginator.count,
+            "search_query": search_query,
+            "company_filter": company_filter,
+            "companies": companies,
+            "query_string": query_string,
+        },
+    )
 
 
 @login_required

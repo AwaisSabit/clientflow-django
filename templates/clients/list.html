@@ -5,6 +5,34 @@
   <h1 class="h3 mb-0">Your clients</h1>
   <a class="btn btn-primary" href="{% url 'clients:create' %}">Add a client</a>
 </div>
+
+{% if has_clients %}
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-6">
+    <label for="client-search" class="visually-hidden">Search clients</label>
+    <input type="search" id="client-search" name="q" class="form-control"
+           placeholder="Search by name, company or email"
+           value="{{ search_query }}">
+  </div>
+  <div class="col-md-4">
+    <label for="company-filter" class="visually-hidden">Filter by company</label>
+    <select id="company-filter" name="company" class="form-select">
+      <option value="">All companies</option>
+      {% for company in companies %}
+        <option value="{{ company }}"{% if company == company_filter %} selected{% endif %}>{{ company }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2 d-grid">
+    <button type="submit" class="btn btn-outline-primary">Search</button>
+  </div>
+</form>
+
+{% if total_count %}
+  <p class="text-muted">{{ total_count }} client{{ total_count|pluralize }}</p>
+{% endif %}
+{% endif %}
+
 {% if clients %}
   <div class="list-group">
     {% for client in clients %}
@@ -17,6 +45,35 @@
       </a>
     {% endfor %}
   </div>
+
+  {% if page_obj.has_other_pages %}
+    <nav aria-label="Client pages" class="mt-3">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if query_string %}{{ query_string }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+        {% for page_number in page_obj.paginator.page_range %}
+          <li class="page-item{% if page_number == page_obj.number %} active{% endif %}"{% if page_number == page_obj.number %} aria-current="page"{% endif %}>
+            <a class="page-link" href="?{% if query_string %}{{ query_string }}&amp;{% endif %}page={{ page_number }}">{{ page_number }}</a>
+          </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if query_string %}{{ query_string }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+{% elif has_clients %}
+  <p class="text-muted">No clients match your search. Try a different search or clear the filters.</p>
+  <a class="btn btn-outline-secondary" href="{% url 'clients:list' %}">Show all clients</a>
 {% else %}
   <p class="text-muted">No clients yet. Add your first client to keep their contact details in one place.</p>
 {% endif %}

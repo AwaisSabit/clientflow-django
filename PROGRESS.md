@@ -195,3 +195,57 @@ to the `clientflow-django` repository.
 
 ### Next steps
 - Project records (Project model + CRUD, linked to clients), per the plan.
+
+## Day 5 — 2026-11-15 (ClientFlow)
+
+### Done
+- Client list search, company filter and pagination on `/clients/`,
+  all owner-scoped — search and filter only ever see the signed-in
+  user's own clients:
+  - `apps/clients/views.py` — `client_list` now reads a `q` query
+    parameter and matches it case-insensitively against name, company
+    and email, and a `company` parameter that narrows the list to one
+    company. The company dropdown is built from the signed-in user's
+    own distinct companies. Results are paginated at 10 clients per
+    page with `Paginator.get_page`, so an out-of-range page shows the
+    last page instead of an error. The page links carry the current
+    search and filter along.
+  - `templates/clients/list.html` — search box and company dropdown
+    in a Bootstrap form that keeps the entered values, a result count
+    ("1 client", "12 clients"), Bootstrap pagination controls with
+    Previous/Next and page numbers, and two empty states: "No clients
+    yet" when the user has no clients at all, and "No clients match
+    your search" with a "Show all clients" link when a search or
+    filter finds nothing.
+- README updated: client list search, filter and pagination moved to
+  "Features that work now"; the planned list and limitations now match
+  the current state. No day numbers anywhere in the README.
+
+### Test results (Day 5)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 52 tests, all passed (36 existing + 16 new
+  in `tests/test_client_search.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: search finds by name, by company and by email;
+  search is case-insensitive; search with no match shows the
+  "No clients match your search" state; the company filter narrows
+  the list correctly; the company dropdown only lists the user's own
+  companies and filtering by a company the user does not have shows
+  nothing; search and filter combined (matching and non-matching);
+  the search box and filter keep their values after submitting;
+  the first page shows 10 clients and page 2 shows the rest; page
+  links keep the search parameter; an out-of-range page shows the
+  last page; search, filter and pagination never show another user's
+  clients; search and filter pages still redirect anonymous users
+  to login.
+- One test needed a fix during the run: the anonymous-redirect test
+  first expected `?next=/clients/`, but Django keeps the query string
+  in the redirect (`?next=/clients/%3Fq%3DSara`); the expectation was
+  corrected and all 52 tests pass.
+
+### Commits (local only)
+- See `git log` in the project repo (3 real commits, in plain English).
+
+### Next steps
+- Project records (Project model + CRUD, linked to clients), per the plan.
