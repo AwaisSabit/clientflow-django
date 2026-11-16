@@ -10,6 +10,10 @@
     <dl class="row">
       <dt class="col-sm-3">Client</dt>
       <dd class="col-sm-9"><a href="{% url 'clients:detail' task.client.pk %}">{{ task.client.name }}</a></dd>
+      <dt class="col-sm-3">Priority</dt>
+      <dd class="col-sm-9">{{ task.get_priority_display }}</dd>
+      <dt class="col-sm-3">Assignee</dt>
+      <dd class="col-sm-9">{% if task.assignee %}{{ task.assignee.display_name|default:task.assignee.username }}{% else %}—{% endif %}</dd>
       <dt class="col-sm-3">Description</dt>
       <dd class="col-sm-9">{{ task.description|default:"—"|linebreaksbr }}</dd>
       <dt class="col-sm-3">Due date</dt>

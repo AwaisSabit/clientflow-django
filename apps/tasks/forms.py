@@ -11,16 +11,37 @@ from .models import Task
 
 
 class TaskForm(forms.ModelForm):
-    """Create or update a task: title, description, client, status and
-    due date."""
+    """Create or update a task: title, description, client, status,
+    priority, assignee and due date."""
+
+    # Priority is optional in the form: a browser always sends the
+    # selected option, but a post without one (or an empty value)
+    # falls back to the model's default instead of failing.
+    priority = forms.ChoiceField(
+        choices=Task.Priority.choices,
+        required=False,
+        initial=Task.Priority.MEDIUM,
+    )
 
     class Meta:
         model = Task
-        fields = ("title", "description", "client", "status", "due_date")
+        fields = (
+            "title",
+            "description",
+            "client",
+            "status",
+            "priority",
+            "assignee",
+            "due_date",
+        )
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
             "due_date": forms.DateInput(attrs={"type": "date"}),
         }
+
+    def clean_priority(self):
+        """An empty priority means the default (medium)."""
+        return self.cleaned_data.get("priority") or Task.Priority.MEDIUM
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)

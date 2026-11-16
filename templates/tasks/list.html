@@ -12,9 +12,12 @@
       <a href="{% url 'tasks:detail' task.pk %}" class="list-group-item list-group-item-action">
         <div class="d-flex w-100 justify-content-between">
           <h2 class="h5 mb-1">{{ task.title }}</h2>
-          <span class="badge {% if task.status == 'done' %}bg-success{% elif task.status == 'in_progress' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ task.get_status_display }}</span>
+          <span>
+            <span class="badge {% if task.priority == 'high' %}bg-danger{% elif task.priority == 'medium' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ task.get_priority_display }}</span>
+            <span class="badge {% if task.status == 'done' %}bg-success{% elif task.status == 'in_progress' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ task.get_status_display }}</span>
+          </span>
         </div>
-        <small class="text-muted">{{ task.client.name }}{% if task.due_date %} · due {{ task.due_date|date:"j F Y" }}{% endif %}</small>
+        <small class="text-muted">{{ task.client.name }}{% if task.assignee %} · {{ task.assignee.display_name|default:task.assignee.username }}{% endif %}{% if task.due_date %} · due {{ task.due_date|date:"j F Y" }}{% endif %}</small>
       </a>
     {% endfor %}
   </div>

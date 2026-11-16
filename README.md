@@ -31,21 +31,26 @@ another user's clients, projects, tasks or invoices.
   and a linked client — the list shows the soonest due date first and
   a user can never see, edit or delete another user's tasks, or attach
   a task to another user's client
+- Project records: add, view, edit and delete your own projects, with
+  name, description, status (active, on hold, completed), start and due
+  dates and a linked client — a user can never see, edit or delete
+  another user's projects, or attach a project to another user's
+  client; each client page lists that client's projects
+- Task priority and assignee: every task has a priority (low, medium,
+  high — medium by default) and can be assigned to a real user; the
+  list shows priority badges and the detail page shows the assignee
 - Home page and health check
 - Responsive Bootstrap 5 interface
 
 ## Features planned (MVP)
 
 1. Role-aware access: owner/admin and regular team member
-2. Project CRUD linked to clients
-3. Task priority and assignee (tasks themselves already work: title,
-   description, status, due date and linked client)
-4. Invoice creation with line items, subtotal, tax/discount, total, due date
+2. Invoice creation with line items, subtotal, tax/discount, total, due date
    and status
-5. Dashboard with project/task/invoice summaries
-6. CSV export for invoices or clients
-7. Validation, authorization checks and tests throughout
-8. Setup guide and sample/demo data command
+3. Dashboard with project/task/invoice summaries
+4. CSV export for invoices or clients
+5. Validation, authorization checks and tests throughout
+6. Setup guide and sample/demo data command
 
 Out of scope for v1.0.0: payment gateway integration, complex accounting,
 multi-currency tax compliance, mobile app, enterprise multi-tenant billing.
@@ -128,9 +133,10 @@ clientflow-django/
 
 ## Limitations
 
-- Home page, health check, sign-in pages, client records and task
-  records only — no project or invoice features yet. The client list
-  has search, a company filter and pagination; other lists do not yet.
+- Home page, health check, sign-in pages, client records, project
+  records and task records only — no invoice features yet. The client
+  list has search, a company filter and pagination; other lists do not
+  yet.
 - Bootstrap is loaded from a CDN, so the pages need internet access for
   full styling; the app itself still renders without it.
 - No CI workflow yet.

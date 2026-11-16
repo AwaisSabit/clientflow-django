@@ -312,5 +312,100 @@ to the `clientflow-django` repository.
 ### Commits (local only)
 - See `git log` in the project repo (3 real commits, in plain English).
 
+### Projects and task priority/assignee (same day, later)
+- Project model in `apps/projects/models.py`: name, description, status
+  (active / on hold / completed), start and due dates, linked client
+  (foreign key to `apps.clients.Client`, related name `projects`) and
+  owner (foreign key to the custom User, related name `projects`) with
+  created/updated timestamps. `__str__` returns the name; projects
+  order by name. Migration `apps/projects/migrations/0001_initial.py`.
+  Registered in admin with list display, status and owner filters and
+  search.
+- Full project CRUD, all login required and owner-only, following the
+  same pattern as clients and tasks:
+  - `apps/projects/views.py` — list (`/projects/`, only the signed-in
+    user's own projects, ordered by name), detail, create, update and
+    delete. Every lookup filters on `owner=request.user`, so a project
+    belonging to someone else answers with a 404. Create sets the owner
+    to the signed-in user; successful create/update/delete show a message.
+  - `apps/projects/forms.py` — `ProjectForm` (ModelForm with Bootstrap
+    styling, date pickers for the dates). The form takes the signed-in
+    user and only offers that user's own clients in the client dropdown,
+    so a project can never be attached to another user's client.
+  - `apps/projects/urls.py` — `/projects/`, `/projects/add/`,
+    `/projects/<pk>/`, `/projects/<pk>/edit/`, `/projects/<pk>/delete/`,
+    wired into `config/urls.py`.
+  - Templates under `templates/projects/` extending `base.html`:
+    `list.html` (status badges and due dates, with a "No projects yet"
+    empty state), `detail.html` (with a link to the linked client),
+    `form.html` (shared by create and edit), `confirm_delete.html`.
+  - `templates/base.html` — "Projects" link in the nav for signed-in
+    users. `templates/clients/detail.html` now lists that client's
+    projects with links.
+- Task priority and assignee, added to the existing Task model (which
+  was built earlier the same day, linked to clients):
+  - `apps/tasks/models.py` — `Priority` (low / medium / high, default
+    medium) and `assignee` (foreign key to the custom User, may be
+    empty, `SET_NULL` so deleting a user keeps their tasks),
+    migration `apps/tasks/migrations/0002_task_assignee_task_priority.py`.
+  - `apps/tasks/forms.py` — the form now offers priority and assignee;
+    priority falls back to medium when a post leaves it out, so older
+    posts without it still save.
+  - `apps/tasks/admin.py` — priority and assignee in the list display
+    and filters. `templates/tasks/list.html` shows a priority badge
+    next to the status badge; `templates/tasks/detail.html` shows the
+    priority and the assignee (or a dash when there is none).
+- Note: the plan's task design links tasks to projects, but the Task
+  model was already built, tested and committed earlier the same day
+  linked to clients (19 tests), so tasks keep their client link and
+  gained priority and assignee instead of being rebuilt around
+  projects. Whether tasks should also link to projects is a decision
+  for a later day.
+
+### Test results (projects + task fields)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 104 tests, all passed (71 existing + 20 new
+  in `tests/test_projects.py` + 13 new in `tests/test_task_fields.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New project tests cover: the list redirects anonymous users to login;
+  the empty list shows "No projects yet"; the list shows only the
+  signed-in user's projects and hides the other user's; the list is
+  ordered by name; the nav shows a Projects link when signed in;
+  creating a project saves it under the signed-in user and redirects
+  to its detail page; creating without a name saves nothing; the client
+  dropdown only lists the user's own clients; creating with another
+  user's client is rejected and saves nothing; the detail page shows
+  the project's details and its client; detail of another user's
+  project answers with a 404; the client detail page lists that
+  client's projects; updating saves the changes; update of another
+  user's project answers with a 404 and changes nothing; updating with
+  another user's client is rejected; delete asks for confirmation,
+  then removes the project and returns to the list; delete of another
+  user's project answers with a 404 and changes nothing; `str(project)`
+  returns the name; the owner and the client can both reach the project
+  from their side.
+- New task field tests cover: priority defaults to medium; creating
+  with high priority saves it; creating without a priority saves
+  medium; an invalid priority value saves nothing; updating changes
+  the priority; the list shows the priority; the assignee is empty by
+  default; creating with a real user as assignee saves it; the detail
+  page shows the assignee; a task with no assignee shows a dash;
+  creating with a made-up user id is rejected and saves nothing;
+  updating clears the assignee; deleting the assignee keeps the task
+  with no assignee.
+- Two real bugs were found and fixed while adding the fields: the
+  detail page crashed on a task with no assignee (the template tried
+  to read the assignee's name through a filter argument, which Django
+  does not forgive — now guarded with an `{% if %}`), and creating or
+  updating a task failed when the post left priority out (a required
+  choice field with no posted value is invalid — the form now treats
+  a missing priority as medium). All 71 older tests pass again after
+  the fixes.
+
+### Commits (local only)
+- See `git log` in the project repo (4 more real commits, in plain
+  English, for the project work and the task fields).
+
 ### Next steps
-- Project records (Project model + CRUD, linked to clients), per the plan.
+- Invoice records (Invoice and invoice-line models), per the plan.

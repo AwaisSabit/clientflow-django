@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — ClientFlow{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h1 class="h3 mb-3">{{ project.name }}</h1>
+    <p>
+      <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'on_hold' %}bg-warning text-dark{% else %}bg-primary{% endif %}">{{ project.get_status_display }}</span>
+    </p>
+    <dl class="row">
+      <dt class="col-sm-3">Client</dt>
+      <dd class="col-sm-9"><a href="{% url 'clients:detail' project.client.pk %}">{{ project.client.name }}</a></dd>
+      <dt class="col-sm-3">Description</dt>
+      <dd class="col-sm-9">{{ project.description|default:"—"|linebreaksbr }}</dd>
+      <dt class="col-sm-3">Start date</dt>
+      <dd class="col-sm-9">{{ project.start_date|date:"j F Y"|default:"—" }}</dd>
+      <dt class="col-sm-3">Due date</dt>
+      <dd class="col-sm-9">{{ project.due_date|date:"j F Y"|default:"—" }}</dd>
+      <dt class="col-sm-3">Added</dt>
+      <dd class="col-sm-9">{{ project.created|date:"j F Y" }}</dd>
+    </dl>
+    <a class="btn btn-primary" href="{% url 'projects:update' project.pk %}">Edit</a>
+    <a class="btn btn-outline-danger" href="{% url 'projects:delete' project.pk %}">Delete</a>
+    <a class="btn btn-outline-secondary" href="{% url 'projects:list' %}">Back to projects</a>
+  </div>
+</div>
+{% endblock %}

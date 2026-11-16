@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Your projects — ClientFlow{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Your projects</h1>
+  <a class="btn btn-primary" href="{% url 'projects:create' %}">Add a project</a>
+</div>
+
+{% if projects %}
+  <div class="list-group">
+    {% for project in projects %}
+      <a href="{% url 'projects:detail' project.pk %}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h2 class="h5 mb-1">{{ project.name }}</h2>
+          <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'on_hold' %}bg-warning text-dark{% else %}bg-primary{% endif %}">{{ project.get_status_display }}</span>
+        </div>
+        <small class="text-muted">{{ project.client.name }}{% if project.due_date %} · due {{ project.due_date|date:"j F Y" }}{% endif %}</small>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-muted">No projects yet. Add your first project to keep track of the work you owe a client.</p>
+{% endif %}
+{% endblock %}

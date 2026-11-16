@@ -17,6 +17,11 @@ class Task(models.Model):
         IN_PROGRESS = "in_progress", "In progress"
         DONE = "done", "Done"
 
+    class Priority(models.TextChoices):
+        LOW = "low", "Low"
+        MEDIUM = "medium", "Medium"
+        HIGH = "high", "High"
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -33,6 +38,18 @@ class Task(models.Model):
         max_length=20,
         choices=Status.choices,
         default=Status.TODO,
+    )
+    priority = models.CharField(
+        max_length=20,
+        choices=Priority.choices,
+        default=Priority.MEDIUM,
+    )
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_tasks",
     )
     due_date = models.DateField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
