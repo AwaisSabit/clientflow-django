@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Your tasks — ClientFlow{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Your tasks</h1>
+  <a class="btn btn-primary" href="{% url 'tasks:create' %}">Add a task</a>
+</div>
+
+{% if tasks %}
+  <div class="list-group">
+    {% for task in tasks %}
+      <a href="{% url 'tasks:detail' task.pk %}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h2 class="h5 mb-1">{{ task.title }}</h2>
+          <span class="badge {% if task.status == 'done' %}bg-success{% elif task.status == 'in_progress' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ task.get_status_display }}</span>
+        </div>
+        <small class="text-muted">{{ task.client.name }}{% if task.due_date %} · due {{ task.due_date|date:"j F Y" }}{% endif %}</small>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-muted">No tasks yet. Add your first task to keep track of the work you owe a client.</p>
+{% endif %}
+{% endblock %}

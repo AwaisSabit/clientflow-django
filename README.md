@@ -26,6 +26,11 @@ another user's clients, projects, tasks or invoices.
   company or email, narrow the list to one of your own companies, 10
   clients per page, with a result count and clear empty states — the
   search and filter never show another user's clients
+- Task records: add, view, edit and delete your own tasks, with title,
+  description, status (to do, in progress, done), an optional due date
+  and a linked client — the list shows the soonest due date first and
+  a user can never see, edit or delete another user's tasks, or attach
+  a task to another user's client
 - Home page and health check
 - Responsive Bootstrap 5 interface
 
@@ -33,7 +38,8 @@ another user's clients, projects, tasks or invoices.
 
 1. Role-aware access: owner/admin and regular team member
 2. Project CRUD linked to clients
-3. Task management with status, priority, due date and assignee
+3. Task priority and assignee (tasks themselves already work: title,
+   description, status, due date and linked client)
 4. Invoice creation with line items, subtotal, tax/discount, total, due date
    and status
 5. Dashboard with project/task/invoice summaries
@@ -122,9 +128,9 @@ clientflow-django/
 
 ## Limitations
 
-- Home page, health check, sign-in pages and client records only — no
-  project/task/invoice features yet. The client list has search, a
-  company filter and pagination; other lists do not yet.
+- Home page, health check, sign-in pages, client records and task
+  records only — no project or invoice features yet. The client list
+  has search, a company filter and pagination; other lists do not yet.
 - Bootstrap is loaded from a CDN, so the pages need internet access for
   full styling; the app itself still renders without it.
 - No CI workflow yet.

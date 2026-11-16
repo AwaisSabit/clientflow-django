@@ -194,7 +194,7 @@ to the `clientflow-django` repository.
 - See `git log` in the project repo (3 real commits, in plain English).
 
 ### Next steps
-- Project records (Project model + CRUD, linked to clients), per the plan.
+- Task records (Task model + CRUD, linked to clients), per the plan.
 
 ## Day 5 — 2026-11-15 (ClientFlow)
 
@@ -243,6 +243,71 @@ to the `clientflow-django` repository.
   first expected `?next=/clients/`, but Django keeps the query string
   in the redirect (`?next=/clients/%3Fq%3DSara`); the expectation was
   corrected and all 52 tests pass.
+
+### Commits (local only)
+- See `git log` in the project repo (3 real commits, in plain English).
+
+### Next steps
+- Project records (Project model + CRUD, linked to clients), per the plan.
+
+## Day 6 — 2026-11-16 (ClientFlow)
+
+### Done
+- Task model in `apps/tasks/models.py`: title, description, status
+  (to do / in progress / done), optional due date, linked client
+  (foreign key to `apps.clients.Client`, related name `tasks`) and
+  owner (foreign key to the custom User, related name `tasks`) with
+  created/updated timestamps. `__str__` returns the title; tasks
+  order by newest first. Migration `apps/tasks/migrations/0001_initial.py`.
+  Registered in admin with list display, status and owner filters and
+  search.
+- Full CRUD, all login required and owner-only:
+  - `apps/tasks/views.py` — list (`/tasks/`, only the signed-in
+    user's own tasks, soonest due date first with tasks that have no
+    due date last, then newest first), detail, create, update and
+    delete. Every lookup filters on `owner=request.user`, so a task
+    belonging to someone else answers with a 404 — never a permission
+    page and never the other user's data. Create sets the owner to the
+    signed-in user; successful create/update/delete show a message.
+  - `apps/tasks/forms.py` — `TaskForm` (ModelForm with Bootstrap
+    styling on every field, a date picker for the due date). The form
+    takes the signed-in user and only offers that user's own clients
+    in the client dropdown, so a task can never be attached to
+    another user's client — posting another user's client id is
+    rejected by the form and saves nothing.
+  - `apps/tasks/urls.py` — `/tasks/`, `/tasks/add/`,
+    `/tasks/<pk>/`, `/tasks/<pk>/edit/`, `/tasks/<pk>/delete/`,
+    wired into `config/urls.py`.
+  - Templates under `templates/tasks/` extending `base.html`:
+    `list.html` (status badges and due dates, with a "No tasks yet"
+    empty state), `detail.html` (with a link to the linked client),
+    `form.html` (shared by create and edit), `confirm_delete.html`.
+  - `templates/base.html` — "Tasks" link in the nav for signed-in
+    users.
+- README updated: task records moved to "Features that work now";
+  the planned list and limitations now match the current state. No day
+  numbers anywhere in the README.
+
+### Test results (Day 6)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 71 tests, all passed (52 existing + 19 new
+  in `tests/test_tasks.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: the list redirects anonymous users to login; the
+  empty list shows "No tasks yet"; the list shows only the signed-in
+  user's tasks and hides the other user's; the list is ordered by due
+  date with tasks that have no due date last; the nav shows a Tasks
+  link when signed in; creating a task saves it under the signed-in
+  user and redirects to its detail page; creating without a title
+  saves nothing; the client dropdown only lists the user's own
+  clients; creating with another user's client is rejected and saves
+  nothing; the detail page shows the task's details; detail, update
+  and delete of another user's task all answer with a 404 and change
+  nothing; updating saves the changes; updating with another user's
+  client is rejected; delete asks for confirmation, then removes the
+  task and returns to the list; `str(task)` returns the title; the
+  owner and the client can both reach the task from their side.
 
 ### Commits (local only)
 - See `git log` in the project repo (3 real commits, in plain English).

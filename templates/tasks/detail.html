@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }} — ClientFlow{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h1 class="h3 mb-3">{{ task.title }}</h1>
+    <p>
+      <span class="badge {% if task.status == 'done' %}bg-success{% elif task.status == 'in_progress' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ task.get_status_display }}</span>
+    </p>
+    <dl class="row">
+      <dt class="col-sm-3">Client</dt>
+      <dd class="col-sm-9"><a href="{% url 'clients:detail' task.client.pk %}">{{ task.client.name }}</a></dd>
+      <dt class="col-sm-3">Description</dt>
+      <dd class="col-sm-9">{{ task.description|default:"—"|linebreaksbr }}</dd>
+      <dt class="col-sm-3">Due date</dt>
+      <dd class="col-sm-9">{{ task.due_date|date:"j F Y"|default:"—" }}</dd>
+      <dt class="col-sm-3">Added</dt>
+      <dd class="col-sm-9">{{ task.created|date:"j F Y" }}</dd>
+    </dl>
+    <a class="btn btn-primary" href="{% url 'tasks:update' task.pk %}">Edit</a>
+    <a class="btn btn-outline-danger" href="{% url 'tasks:delete' task.pk %}">Delete</a>
+    <a class="btn btn-outline-secondary" href="{% url 'tasks:list' %}">Back to tasks</a>
+  </div>
+</div>
+{% endblock %}
