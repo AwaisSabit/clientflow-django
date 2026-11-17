@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "apps.clients",
     "apps.projects",
     "apps.tasks",
+    "apps.dashboard",
     "apps.billing",
 ]
 

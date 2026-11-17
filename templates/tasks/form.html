@@ -17,7 +17,7 @@
         </div>
       {% endfor %}
       <button type="submit" class="btn btn-primary">{% if task %}Save changes{% else %}Add task{% endif %}</button>
-      <a class="btn btn-outline-secondary" href="{% if task %}{% url 'tasks:detail' task.pk %}{% else %}{% url 'tasks:list' %}{% endif %}">Cancel</a>
+      <a class="btn btn-outline-secondary" href="{% if task %}{% url 'tasks:detail' task.pk %}{% else %}{% url 'projects:task-list' project.pk %}{% endif %}">Cancel</a>
     </form>
   </div>
 </div>

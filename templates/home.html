@@ -8,6 +8,9 @@
       A simple place for freelancers and small teams to manage clients,
       projects, tasks and invoices — without a complicated enterprise CRM.
     </p>
+    {% if user.is_authenticated %}
+      <a class="btn btn-primary btn-lg" href="{% url 'dashboard:dashboard' %}">Open your dashboard</a>
+    {% endif %}
     <a class="btn btn-primary btn-lg" href="/admin/">Open the admin</a>
     <a class="btn btn-outline-secondary btn-lg" href="{% url 'health' %}">Health check</a>
   </div>

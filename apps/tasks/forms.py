@@ -1,17 +1,17 @@
 """Form for creating and editing a task.
 
-The client dropdown only ever offers the signed-in user's own
-clients — a task can never be attached to someone else's client.
+The project dropdown only ever offers the signed-in user's own
+projects — a task can never be attached to someone else's project.
 """
 from django import forms
 
-from apps.clients.models import Client
+from apps.projects.models import Project
 
 from .models import Task
 
 
 class TaskForm(forms.ModelForm):
-    """Create or update a task: title, description, client, status,
+    """Create or update a task: title, description, project, status,
     priority, assignee and due date."""
 
     # Priority is optional in the form: a browser always sends the
@@ -28,7 +28,7 @@ class TaskForm(forms.ModelForm):
         fields = (
             "title",
             "description",
-            "client",
+            "project",
             "status",
             "priority",
             "assignee",
@@ -46,7 +46,7 @@ class TaskForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if user is not None:
-            self.fields["client"].queryset = Client.objects.filter(
+            self.fields["project"].queryset = Project.objects.filter(
                 owner=user
             ).order_by("name")
         for field in self.fields.values():

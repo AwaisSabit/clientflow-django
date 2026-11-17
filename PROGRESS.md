@@ -357,10 +357,10 @@ to the `clientflow-django` repository.
     priority and the assignee (or a dash when there is none).
 - Note: the plan's task design links tasks to projects, but the Task
   model was already built, tested and committed earlier the same day
-  linked to clients (19 tests), so tasks keep their client link and
+  linked to clients (19 tests), so tasks kept their client link and
   gained priority and assignee instead of being rebuilt around
-  projects. Whether tasks should also link to projects is a decision
-  for a later day.
+  projects. Sir Awais decided later the same day to link tasks to
+  projects instead — see "Task rework" below.
 
 ### Test results (projects + task fields)
 - `python manage.py check` — passed, no issues.
@@ -406,6 +406,142 @@ to the `clientflow-django` repository.
 ### Commits (local only)
 - See `git log` in the project repo (4 more real commits, in plain
   English, for the project work and the task fields).
+
+### Next steps
+- Invoice records (Invoice and invoice-line models), per the plan.
+
+## Task rework — 2026-11-16 (tasks linked to projects)
+
+### Why
+Sir Awais chose to link tasks to projects instead of clients, matching
+the plan's architecture (a project belongs to a client, and its tasks
+belong to it). Until this rework tasks were linked straight to a
+client, which the Day 6 note above had flagged as an open decision.
+
+### Done
+- `apps/tasks/models.py` — the Task model drops the `client` foreign
+  key and gains a `project` foreign key to `apps.projects.Project`
+  (related name `tasks`). Owner, status, priority, due date, assignee
+  and timestamps are unchanged. Migration
+  `apps/tasks/migrations/0003_remove_task_client_task_project.py`
+  removes the client field and adds the project field outright — there
+  is no production data, only test data, so nothing is carried across.
+- `apps/tasks/forms.py` — `TaskForm` takes a project instead of a
+  client; the dropdown only offers the signed-in user's own projects.
+- `apps/tasks/views.py` — the task list and creation now live under
+  their project (`/projects/<pk>/tasks/` and
+  `/projects/<pk>/tasks/add/`); detail, edit and delete stay at
+  `/tasks/<pk>/...`. Every view is login-required and owner-scoped:
+  opening another user's project task list or create page answers
+  with a 404, and the project in the URL is authoritative when a
+  task is created — posting a different project id in the form still
+  saves the task under the project in the URL. Deleting a task now
+  returns to that project's task list.
+- `apps/projects/urls.py` — the nested task list and create routes
+  (`task-list`, `task-create`); `apps/tasks/urls.py` keeps only
+  detail, update and delete.
+- `apps/tasks/admin.py` — project replaces client in the list display
+  and filters.
+- Templates — `templates/tasks/list.html` is now "Tasks for
+  <project>", with an "Add a task" button and a back link to the
+  project; `detail.html` shows the project (linked) instead of the
+  client; `form.html` cancels back to the project's task list when
+  creating; `confirm_delete.html` names the project. The project
+  detail page now lists its tasks with status and priority badges and
+  an "Add a task" button, so tasks are reached through their project.
+  The "Tasks" link was removed from the nav in `templates/base.html` —
+  the projects list is the way in to tasks now. The client detail page
+  already listed only projects, so it needed no change.
+- README updated: task records are now described as linked to a
+  project, with the list living under it. No day numbers anywhere in
+  the README.
+
+### Test results (rework)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 108 tests, all passed (104 existing + 4
+  new). `tests/test_tasks.py` and `tests/test_task_fields.py` were
+  rewritten to build a project first and create tasks under it.
+- `python manage.py makemigrations --check --dry-run` — no changes
+  detected, so the hand-written migration matches the model state.
+- `python manage.py migrate tasks` — applies cleanly on the dev
+  database (0001, 0002, 0003).
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: the task list and create page of another user's
+  project answer with a 404; creating under another user's project
+  id is rejected; creating with a different project in the form still
+  saves the task under the project in the URL; the project detail page
+  lists the task and links to it; `project.tasks.all()` reaches the
+  task. The older task tests now run against the project link
+  (dropdown, update rejection, delete redirect to the project's task
+  list, model relations).
+
+### Commits (local only)
+- See `git log` in the project repo (3 real commits, in plain
+  English).
+
+### Next steps
+- Invoice records (Invoice and invoice-line models), per the plan.
+
+## Day 7 — 2026-11-17 (ClientFlow)
+
+### Done
+- Dashboard page at `/dashboard/` (login required) that sums up the
+  signed-in user's own work — nothing from another user ever appears:
+  - New `apps/dashboard/` app (views, URLs, no models, so no new
+    migration): `apps/dashboard/views.py` — `dashboard` view, login
+    required, everything filtered on `owner=request.user`. It counts
+    the user's own clients, projects and tasks; splits tasks by
+    status (to do, in progress, done); lists overdue tasks — due date
+    in the past and status not done — soonest due first; and shows
+    the newest 5 clients, projects and tasks. Registered in
+    `config/settings/base.py` and wired in at `dashboard/` in
+    `config/urls.py`.
+  - `templates/dashboard/dashboard.html` — Bootstrap cards for the
+    three counts, a tasks-by-status list with count badges, an
+    overdue-tasks list with due dates, and recent clients, projects
+    and tasks with links to their detail pages, plus quick links to
+    add a client, add a project and open the clients and projects
+    lists. Plain-word empty states ("No clients yet", "No projects
+    yet", "No tasks yet", "No overdue tasks").
+  - `templates/base.html` — "Dashboard" link in the nav for
+    signed-in users. `templates/home.html` — an "Open your dashboard"
+    button for signed-in users. Tasks stay linked to projects, as
+    after the 16 Nov rework: the nav still has no "Tasks" link and
+    tasks are still reached through their project.
+- README updated: the dashboard moved to "Features that work now" and
+  off the planned list; the limitations now match the current state.
+  No day numbers anywhere in the README.
+
+### Test results (Day 7)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 123 tests, all passed (108 existing + 15
+  new in `tests/test_dashboard.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: the dashboard redirects anonymous users to login;
+  a signed-in user sees the dashboard; counts only include the
+  signed-in user's own clients, projects and tasks; the status
+  breakdown counts are right; the empty dashboard shows plain empty
+  states; the overdue list only has past-due unfinished tasks of that
+  user, soonest due first, and leaves out finished, not-yet-due and
+  dateless tasks and the other user's overdue tasks; overdue tasks
+  link to their detail pages; the recent lists show the user's newest
+  five of each and hide the oldest and the other user's items; the
+  nav shows Dashboard when signed in and hides it when signed out;
+  the home page links to the dashboard when signed in and not when
+  signed out; the dashboard quick links work; the dashboard links to
+  recent items' detail pages.
+- Two test mistakes were found and fixed while running them: the
+  recent-lists test first linked every task to the same project, so
+  the excluded project's name still showed under the tasks, and the
+  overdue test first expected finished and not-yet-due tasks to be
+  absent from the whole page, when they rightly appear in the
+  recent-tasks list — the checks now look at the overdue section
+  itself. The dashboard code was right in both cases.
+
+### Commits (local only)
+- See `git log` in the project repo (3 real commits, in plain
+  English).
 
 ### Next steps
 - Invoice records (Invoice and invoice-line models), per the plan.

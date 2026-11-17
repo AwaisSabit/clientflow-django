@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Your dashboard — ClientFlow{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Your dashboard</h1>
+  <div>
+    <a class="btn btn-primary" href="{% url 'clients:create' %}">Add a client</a>
+    <a class="btn btn-primary" href="{% url 'projects:create' %}">Add a project</a>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <p class="display-6 mb-0">{{ client_count }}</p>
+        <p class="text-muted mb-2">Clients</p>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'clients:list' %}">See all clients</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <p class="display-6 mb-0">{{ project_count }}</p>
+        <p class="text-muted mb-2">Projects</p>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'projects:list' %}">See all projects</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <p class="display-6 mb-0">{{ task_count }}</p>
+        <p class="text-muted mb-2">Tasks</p>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'projects:list' %}">See your projects</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-6">
+    <h2 class="h4">Tasks by status</h2>
+    <ul class="list-group">
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        To do
+        <span class="badge bg-secondary rounded-pill">{{ todo_count }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        In progress
+        <span class="badge bg-primary rounded-pill">{{ in_progress_count }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Done
+        <span class="badge bg-success rounded-pill">{{ done_count }}</span>
+      </li>
+    </ul>
+  </div>
+  <div class="col-md-6">
+    <h2 class="h4">Overdue tasks</h2>
+    {% if overdue_tasks %}
+      <div class="list-group">
+        {% for task in overdue_tasks %}
+          <a href="{% url 'tasks:detail' task.pk %}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <h3 class="h6 mb-1">{{ task.title }}</h3>
+              <small class="text-danger">due {{ task.due_date|date:"j F Y" }}</small>
+            </div>
+            <small class="text-muted">{{ task.project.name }}</small>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">No overdue tasks. Nothing is past its due date.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4">
+    <h2 class="h4">Recent clients</h2>
+    {% if recent_clients %}
+      <div class="list-group">
+        {% for client in recent_clients %}
+          <a href="{% url 'clients:detail' client.pk %}" class="list-group-item list-group-item-action">{{ client.name }}</a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">No clients yet. <a href="{% url 'clients:create' %}">Add your first client</a>.</p>
+    {% endif %}
+  </div>
+  <div class="col-md-4">
+    <h2 class="h4">Recent projects</h2>
+    {% if recent_projects %}
+      <div class="list-group">
+        {% for project in recent_projects %}
+          <a href="{% url 'projects:detail' project.pk %}" class="list-group-item list-group-item-action">{{ project.name }}</a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">No projects yet. <a href="{% url 'projects:create' %}">Add your first project</a>.</p>
+    {% endif %}
+  </div>
+  <div class="col-md-4">
+    <h2 class="h4">Recent tasks</h2>
+    {% if recent_tasks %}
+      <div class="list-group">
+        {% for task in recent_tasks %}
+          <a href="{% url 'tasks:detail' task.pk %}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <span>{{ task.title }}</span>
+              <span class="badge {% if task.status == 'done' %}bg-success{% elif task.status == 'in_progress' %}bg-primary{% else %}bg-secondary{% endif %}">{{ task.get_status_display }}</span>
+            </div>
+            <small class="text-muted">{{ task.project.name }}</small>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">No tasks yet. Add a task from one of your projects.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -8,7 +8,7 @@ from .models import Task
 class TaskAdmin(admin.ModelAdmin):
     list_display = (
         "title",
-        "client",
+        "project",
         "status",
         "priority",
         "assignee",
@@ -16,6 +16,6 @@ class TaskAdmin(admin.ModelAdmin):
         "owner",
         "created",
     )
-    list_filter = ("status", "priority", "owner")
+    list_filter = ("status", "priority", "owner", "project")
     search_fields = ("title", "description")
     readonly_fields = ("created", "updated")

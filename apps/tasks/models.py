@@ -1,7 +1,7 @@
 """Task model for ClientFlow.
 
 Each task belongs to one user (the owner) and is linked to one of that
-user's clients. A user can only see, edit or delete their own tasks —
+user's projects. A user can only see, edit or delete their own tasks —
 the views enforce that, so one user's tasks never leak into another
 user's list.
 """
@@ -10,7 +10,7 @@ from django.db import models
 
 
 class Task(models.Model):
-    """A piece of work to do for a client."""
+    """A piece of work to do for a project."""
 
     class Status(models.TextChoices):
         TODO = "to_do", "To do"
@@ -27,8 +27,8 @@ class Task(models.Model):
         on_delete=models.CASCADE,
         related_name="tasks",
     )
-    client = models.ForeignKey(
-        "clients.Client",
+    project = models.ForeignKey(
+        "projects.Project",
         on_delete=models.CASCADE,
         related_name="tasks",
     )

@@ -1,17 +1,17 @@
 """Tests for task priority and assignee. A task's priority defaults
 to medium, and an assignee must be a real user — posting a made-up
-user id is rejected and saves nothing.
+user id is rejected and saves nothing. Tasks are created under a
+project, so the create page lives at that project's task list.
 """
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
 from apps.clients.models import Client
+from apps.projects.models import Project
 from apps.tasks.models import Task
 
 User = get_user_model()
-
-TASK_CREATE_URL = reverse("tasks:create")
 
 GOOD_PASSWORD = "testpass123"
 
@@ -35,11 +35,17 @@ def make_client(owner, name="Sara Khan"):
     )
 
 
-def task_form_data(client, **overrides):
+def make_project(owner, client=None, name="Website redesign"):
+    if client is None:
+        client = make_client(owner)
+    return Project.objects.create(owner=owner, client=client, name=name)
+
+
+def task_form_data(project, **overrides):
     data = {
         "title": "Design the home page",
         "description": "New layout for the client site.",
-        "client": str(client.pk),
+        "project": str(project.pk),
         "status": Task.Status.TODO,
         "due_date": "2026-11-20",
     }
@@ -50,11 +56,17 @@ def task_form_data(client, **overrides):
 class TaskPriorityTests(TestCase):
     def setUp(self):
         self.user = make_user("awais")
-        self.client_obj = make_client(self.user)
+        self.project = make_project(self.user)
+        self.create_url = reverse(
+            "projects:task-create", args=[self.project.pk]
+        )
+        self.list_url = reverse(
+            "projects:task-list", args=[self.project.pk]
+        )
 
     def test_priority_defaults_to_medium(self):
         task = Task.objects.create(
-            owner=self.user, client=self.client_obj, title="Plain task"
+            owner=self.user, project=self.project, title="Plain task"
         )
         self.assertEqual(task.priority, Task.Priority.MEDIUM)
         self.assertEqual(task.get_priority_display(), "Medium")
@@ -62,8 +74,8 @@ class TaskPriorityTests(TestCase):
     def test_create_with_high_priority_saves_it(self):
         self.client.force_login(self.user)
         self.client.post(
-            TASK_CREATE_URL,
-            task_form_data(self.client_obj, priority=Task.Priority.HIGH),
+            self.create_url,
+            task_form_data(self.project, priority=Task.Priority.HIGH),
         )
         task = Task.objects.get(title="Design the home page")
         self.assertEqual(task.priority, Task.Priority.HIGH)
@@ -71,7 +83,7 @@ class TaskPriorityTests(TestCase):
     def test_create_without_a_priority_saves_medium(self):
         self.client.force_login(self.user)
         self.client.post(
-            TASK_CREATE_URL, task_form_data(self.client_obj)
+            self.create_url, task_form_data(self.project)
         )
         task = Task.objects.get(title="Design the home page")
         self.assertEqual(task.priority, Task.Priority.MEDIUM)
@@ -79,21 +91,21 @@ class TaskPriorityTests(TestCase):
     def test_create_with_an_invalid_priority_saves_nothing(self):
         self.client.force_login(self.user)
         response = self.client.post(
-            TASK_CREATE_URL,
-            task_form_data(self.client_obj, priority="urgent"),
+            self.create_url,
+            task_form_data(self.project, priority="urgent"),
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Task.objects.count(), 0)
 
     def test_update_changes_the_priority(self):
         task = Task.objects.create(
-            owner=self.user, client=self.client_obj, title="Plain task"
+            owner=self.user, project=self.project, title="Plain task"
         )
         self.client.force_login(self.user)
         self.client.post(
             reverse("tasks:update", args=[task.pk]),
             task_form_data(
-                self.client_obj,
+                self.project,
                 title="Plain task",
                 priority=Task.Priority.LOW,
             ),
@@ -104,12 +116,12 @@ class TaskPriorityTests(TestCase):
     def test_list_shows_the_priority(self):
         Task.objects.create(
             owner=self.user,
-            client=self.client_obj,
+            project=self.project,
             title="Urgent fix",
             priority=Task.Priority.HIGH,
         )
         self.client.force_login(self.user)
-        response = self.client.get(reverse("tasks:list"))
+        response = self.client.get(self.list_url)
         self.assertContains(response, "High")
 
 
@@ -117,20 +129,23 @@ class TaskAssigneeTests(TestCase):
     def setUp(self):
         self.user = make_user("awais")
         self.teammate = make_user("bilal")
-        self.client_obj = make_client(self.user)
+        self.project = make_project(self.user)
+        self.create_url = reverse(
+            "projects:task-create", args=[self.project.pk]
+        )
 
     def test_assignee_is_empty_by_default(self):
         task = Task.objects.create(
-            owner=self.user, client=self.client_obj, title="Plain task"
+            owner=self.user, project=self.project, title="Plain task"
         )
         self.assertIsNone(task.assignee)
 
     def test_create_with_a_real_assignee_saves_it(self):
         self.client.force_login(self.user)
         self.client.post(
-            TASK_CREATE_URL,
+            self.create_url,
             task_form_data(
-                self.client_obj, assignee=str(self.teammate.pk)
+                self.project, assignee=str(self.teammate.pk)
             ),
         )
         task = Task.objects.get(title="Design the home page")
@@ -139,7 +154,7 @@ class TaskAssigneeTests(TestCase):
     def test_detail_shows_the_assignee(self):
         task = Task.objects.create(
             owner=self.user,
-            client=self.client_obj,
+            project=self.project,
             title="Shared task",
             assignee=self.teammate,
         )
@@ -151,7 +166,7 @@ class TaskAssigneeTests(TestCase):
 
     def test_detail_without_an_assignee_shows_a_dash(self):
         task = Task.objects.create(
-            owner=self.user, client=self.client_obj, title="Solo task"
+            owner=self.user, project=self.project, title="Solo task"
         )
         self.client.force_login(self.user)
         response = self.client.get(
@@ -163,8 +178,8 @@ class TaskAssigneeTests(TestCase):
     def test_create_with_a_made_up_assignee_is_rejected(self):
         self.client.force_login(self.user)
         response = self.client.post(
-            TASK_CREATE_URL,
-            task_form_data(self.client_obj, assignee="999999"),
+            self.create_url,
+            task_form_data(self.project, assignee="999999"),
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Task.objects.count(), 0)
@@ -172,14 +187,14 @@ class TaskAssigneeTests(TestCase):
     def test_update_clears_the_assignee(self):
         task = Task.objects.create(
             owner=self.user,
-            client=self.client_obj,
+            project=self.project,
             title="Shared task",
             assignee=self.teammate,
         )
         self.client.force_login(self.user)
         self.client.post(
             reverse("tasks:update", args=[task.pk]),
-            task_form_data(self.client_obj, title="Shared task", assignee=""),
+            task_form_data(self.project, title="Shared task", assignee=""),
         )
         task.refresh_from_db()
         self.assertIsNone(task.assignee)
@@ -187,7 +202,7 @@ class TaskAssigneeTests(TestCase):
     def test_deleting_the_assignee_keeps_the_task(self):
         task = Task.objects.create(
             owner=self.user,
-            client=self.client_obj,
+            project=self.project,
             title="Shared task",
             assignee=self.teammate,
         )

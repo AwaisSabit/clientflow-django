@@ -8,8 +8,8 @@
       <span class="badge {% if task.status == 'done' %}bg-success{% elif task.status == 'in_progress' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ task.get_status_display }}</span>
     </p>
     <dl class="row">
-      <dt class="col-sm-3">Client</dt>
-      <dd class="col-sm-9"><a href="{% url 'clients:detail' task.client.pk %}">{{ task.client.name }}</a></dd>
+      <dt class="col-sm-3">Project</dt>
+      <dd class="col-sm-9"><a href="{% url 'projects:detail' task.project.pk %}">{{ task.project.name }}</a></dd>
       <dt class="col-sm-3">Priority</dt>
       <dd class="col-sm-9">{{ task.get_priority_display }}</dd>
       <dt class="col-sm-3">Assignee</dt>
@@ -23,7 +23,7 @@
     </dl>
     <a class="btn btn-primary" href="{% url 'tasks:update' task.pk %}">Edit</a>
     <a class="btn btn-outline-danger" href="{% url 'tasks:delete' task.pk %}">Delete</a>
-    <a class="btn btn-outline-secondary" href="{% url 'tasks:list' %}">Back to tasks</a>
+    <a class="btn btn-outline-secondary" href="{% url 'projects:task-list' task.project.pk %}">Back to tasks</a>
   </div>
 </div>
 {% endblock %}
