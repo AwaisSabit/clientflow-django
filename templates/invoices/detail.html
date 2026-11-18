@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.number }} — ClientFlow{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h1 class="h3 mb-3">{{ invoice.number }}</h1>
+    <p>
+      <span class="badge {% if invoice.status == 'paid' %}bg-success{% elif invoice.status == 'overdue' or invoice.is_overdue %}bg-danger{% elif invoice.status == 'sent' %}bg-primary{% else %}bg-secondary{% endif %}">{{ invoice.get_status_display }}</span>
+      {% if invoice.is_overdue %}<span class="badge bg-danger">Overdue</span>{% endif %}
+    </p>
+    <dl class="row">
+      <dt class="col-sm-3">Client</dt>
+      <dd class="col-sm-9"><a href="{% url 'clients:detail' invoice.client.pk %}">{{ invoice.client.name }}</a></dd>
+      <dt class="col-sm-3">Project</dt>
+      <dd class="col-sm-9">{% if invoice.project %}<a href="{% url 'projects:detail' invoice.project.pk %}">{{ invoice.project.name }}</a>{% else %}—{% endif %}</dd>
+      <dt class="col-sm-3">Issued</dt>
+      <dd class="col-sm-9">{{ invoice.issue_date|date:"j F Y" }}</dd>
+      <dt class="col-sm-3">Due</dt>
+      <dd class="col-sm-9">{{ invoice.due_date|date:"j F Y"|default:"—" }}</dd>
+    </dl>
+
+    <h2 class="h5 mt-4">Line items</h2>
+    {% if invoice.items.all %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th class="text-end">Quantity</th>
+            <th class="text-end">Unit price</th>
+            <th class="text-end">Line total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoice.items.all %}
+            <tr>
+              <td>{{ item.description }}</td>
+              <td class="text-end">{{ item.quantity }}</td>
+              <td class="text-end">{{ item.unit_price }}</td>
+              <td class="text-end">{{ item.line_total }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3" class="text-end">Total</th>
+            <th class="text-end">{{ invoice.total }}</th>
+          </tr>
+        </tfoot>
+      </table>
+    {% else %}
+      <p class="text-muted">No line items on this invoice yet.</p>
+    {% endif %}
+    <a class="btn btn-outline-secondary" href="{% url 'billing:list' %}">Back to invoices</a>
+  </div>
+</div>
+{% endblock %}

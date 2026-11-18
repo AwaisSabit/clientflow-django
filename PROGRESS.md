@@ -545,3 +545,95 @@ client, which the Day 6 note above had flagged as an open decision.
 
 ### Next steps
 - Invoice records (Invoice and invoice-line models), per the plan.
+
+## Day 8 — 2026-11-18 (ClientFlow)
+
+### Done
+- Invoice model in `apps/billing/models.py`: number (unique per
+  owner, auto-generated on first save as INV-0001, INV-0002, ...,
+  sequential per owner), client (foreign key to
+  `apps.clients.Client`, related name `invoices`), optional project
+  (foreign key to `apps.projects.Project`, related name `invoices`,
+  may be empty), status (draft / sent / paid / overdue, default
+  draft), issue date (defaults to today), due date (may be empty),
+  owner (foreign key to the custom User, related name `invoices`)
+  and created/updated timestamps. `__str__` returns the number;
+  invoices order by newest first. Migration
+  `apps/billing/migrations/0001_initial.py`. Numbers are unique per
+  owner (a `UniqueConstraint` on owner + number), not globally, so
+  two users can each have their own INV-0001. `apps/billing` was
+  already registered in `config/settings/base.py` `INSTALLED_APPS`,
+  so no settings change was needed.
+- InvoiceLineItem model in the same file: invoice (foreign key,
+  related name `items`, cascade delete), description, quantity
+  (Decimal, default 1) and unit price (Decimal). Each line has a
+  computed `line_total` property (quantity x unit price), and each
+  invoice has a computed `total` property (sum of its items, zero
+  when there are none) and an `is_overdue` helper (status not paid
+  and due date in the past).
+- Invoices in the app, all login required and owner-only:
+  - `apps/billing/views.py` — list (`/invoices/`, only the
+    signed-in user's own invoices, newest first, with status
+    shown), detail (`/invoices/<pk>/`, shows client, project if
+    any, dates, status, line items with line totals and the invoice
+    total), create (`/invoices/add/`, with an inline formset so
+    line items are added on the same page — at least one line item
+    is required). Every lookup filters on `owner=request.user`, so
+    another user's invoice answers with a 404. Successful create
+    shows a message and redirects to the detail page.
+  - `apps/billing/forms.py` — `InvoiceForm` (ModelForm with
+    Bootstrap styling, date pickers for the dates). The form takes
+    the signed-in user and only offers that user's own clients and
+    projects in the dropdowns, so an invoice can never be attached
+    to another user's client or project — posting another user's
+    client or project id is rejected by the form and saves nothing.
+  - `apps/billing/urls.py` — `/invoices/`, `/invoices/add/`,
+    `/invoices/<pk>/`, wired into `config/urls.py`.
+  - Templates under `templates/invoices/` extending `base.html`:
+    `list.html` (status badges, with a "No invoices yet" empty
+    state), `detail.html` (line-item table with line totals and
+    the invoice total), `form.html` (invoice fields plus the line
+    item formset).
+  - `templates/base.html` — "Invoices" link in the nav for
+    signed-in users.
+  - `apps/billing/admin.py` — both models registered; invoices
+    show number, client, status, dates and owner, with status and
+    owner filters and search; line items are editable inline on
+    the invoice page.
+
+### Test results (Day 8)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 148 tests, all passed (123 existing +
+  25 new in `tests/test_invoices.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: the list redirects anonymous users to login; the
+  empty list shows "No invoices yet"; the list shows only the
+  signed-in user's invoices and hides the other user's; the nav shows
+  an Invoices link when signed in; creating an invoice saves it under
+  the signed-in user with its line items and the total is right
+  (2 x 10.00 + 3 x 5.50 = 36.50) and redirects to its detail page;
+  creating without a client saves nothing; creating without any line
+  items saves nothing; the client dropdown only lists the user's own
+  clients and the project dropdown only their own projects; creating
+  with another user's client or project is rejected and saves
+  nothing; the detail page shows the items, their line totals and
+  the invoice total; detail of another user's invoice answers with a
+  404; `str(invoice)` returns the number; numbers run in sequence
+  per owner (INV-0001, INV-0002) and restart per owner; line total
+  math (2.5 x 19.99 = 49.975, including decimals); an invoice with no
+  line items totals zero; the total sums all line items; the overdue
+  helper is true only when unpaid and past due (paid, future-due and
+  dateless invoices are not overdue); the owner and the client can
+  both reach the invoice from their side.
+- One test mistake was found and fixed while running them: the
+  create-without-a-client test passed the client argument twice to
+  its helper, which raised a TypeError — the helper call was fixed
+  and all 25 new tests pass.
+
+### Commits (local only)
+- See `git log` in the project repo (3 real commits, in plain
+  English).
+
+### Next steps
+- Invoice editing, status changes and deletion, per the plan.

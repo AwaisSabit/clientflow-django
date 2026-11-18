@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Your invoices — ClientFlow{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Your invoices</h1>
+  <a class="btn btn-primary" href="{% url 'billing:create' %}">Add an invoice</a>
+</div>
+
+{% if invoices %}
+  <div class="list-group">
+    {% for invoice in invoices %}
+      <a href="{% url 'billing:detail' invoice.pk %}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h2 class="h5 mb-1">{{ invoice.number }}</h2>
+          <span class="badge {% if invoice.status == 'paid' %}bg-success{% elif invoice.status == 'overdue' or invoice.is_overdue %}bg-danger{% elif invoice.status == 'sent' %}bg-primary{% else %}bg-secondary{% endif %}">{{ invoice.get_status_display }}</span>
+        </div>
+        <small class="text-muted">{{ invoice.client.name }}{% if invoice.project %} · {{ invoice.project.name }}{% endif %} · issued {{ invoice.issue_date|date:"j F Y" }}{% if invoice.due_date %} · due {{ invoice.due_date|date:"j F Y" }}{% endif %}</small>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-muted">No invoices yet. Add your first invoice to bill a client for your work.</p>
+{% endif %}
+{% endblock %}
