@@ -66,3 +66,17 @@ InvoiceLineItemFormSet = inlineformset_factory(
     validate_min=True,
     can_delete=False,
 )
+
+# The edit formset is the same, except it lets the user remove line
+# items. At least one item must still remain: deleting every item is
+# rejected, because an invoice with no lines cannot be saved.
+InvoiceLineItemEditFormSet = inlineformset_factory(
+    Invoice,
+    InvoiceLineItem,
+    form=InvoiceLineItemForm,
+    fields=("description", "quantity", "unit_price"),
+    extra=1,
+    min_num=1,
+    validate_min=True,
+    can_delete=True,
+)

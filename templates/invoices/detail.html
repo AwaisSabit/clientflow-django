@@ -51,6 +51,26 @@
       <p class="text-muted">No line items on this invoice yet.</p>
     {% endif %}
     <a class="btn btn-outline-secondary" href="{% url 'billing:list' %}">Back to invoices</a>
+    <a class="btn btn-primary" href="{% url 'billing:update' invoice.pk %}">Edit invoice</a>
+    <a class="btn btn-outline-danger" href="{% url 'billing:delete' invoice.pk %}">Delete invoice</a>
+    {% if invoice.status == 'draft' %}
+      <form method="post" action="{% url 'billing:status' invoice.pk %}" class="d-inline">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="sent">
+        <button type="submit" class="btn btn-outline-primary">Mark as sent</button>
+      </form>
+      <form method="post" action="{% url 'billing:status' invoice.pk %}" class="d-inline">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="paid">
+        <button type="submit" class="btn btn-outline-success">Mark as paid</button>
+      </form>
+    {% elif invoice.status == 'sent' or invoice.status == 'overdue' %}
+      <form method="post" action="{% url 'billing:status' invoice.pk %}" class="d-inline">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="paid">
+        <button type="submit" class="btn btn-outline-success">Mark as paid</button>
+      </form>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

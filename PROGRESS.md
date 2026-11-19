@@ -637,3 +637,109 @@ client, which the Day 6 note above had flagged as an open decision.
 
 ### Next steps
 - Invoice editing, status changes and deletion, per the plan.
+
+## Day 9 — 2026-11-19 (ClientFlow)
+
+### Done
+- Invoice editing at `/invoices/<pk>/edit/` (login required,
+  owner-only):
+  - `apps/billing/views.py` — `invoice_update` edits the invoice
+    fields (client, project, status, dates) and its line items on
+    one page, with the same owner-scoped form as create, so an
+    invoice can never be attached to another user's client or
+    project. Successful edit shows a message and returns to the
+    detail page; editing another user's invoice answers with a 404.
+  - `apps/billing/forms.py` — new `InvoiceLineItemEditFormSet`,
+    the same as the create formset except line items can be removed.
+    At least one item must still remain: removing every item is
+    rejected, because an invoice with no lines cannot be saved.
+  - `templates/invoices/form.html` — now shared by create and
+    edit: the title and button read "Edit <number>" / "Save changes"
+    when editing, and "Add an invoice" / "Add invoice" when creating.
+  - `templates/invoices/detail.html` — "Edit invoice" and "Delete
+    invoice" buttons.
+- Invoice deletion at `/invoices/<pk>/delete/` (login required,
+  owner-only): `invoice_delete` shows a confirm page
+  (`templates/invoices/confirm_delete.html`), then deletes the
+  invoice and its line items and returns to the list with a message.
+  Deleting another user's invoice answers with a 404 and changes
+  nothing.
+- One-click status changes on the invoice detail page (POST only,
+  owner-only):
+  - `apps/billing/models.py` — `ALLOWED_STATUS_CHANGES` and a
+    `can_move_to` helper, with the rules written down in the code:
+    draft can move to sent or paid, sent and overdue can move to
+    paid, and paid is final — a paid invoice cannot be reopened.
+    Overdue is set from the edit form, never by a one-click button;
+    the edit form sets the status directly and does not enforce
+    these transitions.
+  - `apps/billing/views.py` — `invoice_status_change` at
+    `/invoices/<pk>/status/`. A GET (or any non-POST) changes
+    nothing and returns to the detail page. An unknown status or a
+    move that is not allowed changes nothing and shows an error
+    message. A valid move saves the new status and shows a success
+    message.
+  - `templates/invoices/detail.html` — "Mark as sent" and
+    "Mark as paid" buttons on a draft invoice, "Mark as paid" on a
+    sent or overdue invoice, and no status buttons on a paid one.
+- Invoice list status filter and CSV export:
+  - `apps/billing/views.py` — `invoice_list` now reads a `status`
+    query parameter and narrows the list to one status; an unknown
+    value is ignored and the full list is shown.
+    `invoice_export_csv` at `/invoices/export/` downloads the
+    signed-in user's own invoices as a CSV file (number, client,
+    project — blank when there is none, status, issue date, due
+    date, total), following the same status filter. Totals are
+    written with two decimal places. Another user's invoices never
+    appear.
+  - `templates/invoices/list.html` — status dropdown with a Filter
+    button and a "Show all" link, a "Download as CSV" button that
+    keeps the current filter, and a "No invoices with this status"
+    empty state when a filter matches nothing.
+- README updated: invoice records, status changes, the list filter
+  and CSV export moved to "Features that work now" (the invoice
+  creation from the previous day had not been added to the README
+  yet, so it is added here too); the planned list now only carries
+  what is still missing (invoice tax/discount, CSV export for
+  clients); the limitations now match the current state. No day
+  numbers anywhere in the README.
+
+### Test results (Day 9)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 181 tests, all passed (148 existing +
+  33 new in `tests/test_invoice_actions.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New tests cover: the edit page loads and shows the invoice and its
+  items; editing saves field and line-item changes and redirects to
+  the detail page; editing can add a line item and can remove one;
+  editing that removes every line item saves nothing; edit, delete
+  and status change of another user's invoice all answer with a 404
+  and change nothing; editing with another user's client is rejected;
+  delete asks for confirmation, then removes the invoice and its
+  items and returns to the list; draft can be marked sent or paid,
+  sent and overdue can be marked paid, paid cannot go back to sent
+  or overdue, sent cannot go back to draft, an unknown status changes
+  nothing, and a GET request changes nothing; the detail page offers
+  the right buttons for each status; the list filter narrows to one
+  status, never shows another user's invoices, ignores an unknown
+  status and shows a filtered empty state; the CSV download has the
+  right headers and one row per invoice with the right values
+  (including a blank project and a blank due date), never includes
+  another user's invoices, follows the status filter, returns only
+  the header row when the user has no invoices, and redirects
+  anonymous users to login.
+- Two test mistakes were found and fixed while running them: the
+  CSV total first came out as "16.5000" because the raw Decimal
+  keeps four decimal places — the export now writes totals with two
+  decimal places; and the other-user CSV check first compared
+  invoice numbers, which restart per owner (both users have their
+  own INV-0001) — the check now looks for the other user's client
+  name instead. The export code was right in the second case.
+
+### Commits (local only)
+- See `git log` in the project repo (4 real commits, in plain
+  English).
+
+### Next steps
+- Sample data command and security review, per the plan.

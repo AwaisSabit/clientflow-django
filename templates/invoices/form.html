@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Add an invoice — ClientFlow{% endblock %}
+{% block title %}{% if invoice %}Edit {{ invoice.number }}{% else %}Add an invoice{% endif %} — ClientFlow{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-8">
-    <h1 class="h3 mb-3">Add an invoice</h1>
+    <h1 class="h3 mb-3">{% if invoice %}Edit {{ invoice.number }}{% else %}Add an invoice{% endif %}</h1>
     <form method="post" novalidate>
       {% csrf_token %}
       {% if form.non_field_errors %}
@@ -32,8 +32,8 @@
           {% endfor %}
         </div>
       {% endfor %}
-      <button type="submit" class="btn btn-primary">Add invoice</button>
-      <a class="btn btn-outline-secondary" href="{% url 'billing:list' %}">Cancel</a>
+      <button type="submit" class="btn btn-primary">{% if invoice %}Save changes{% else %}Add invoice{% endif %}</button>
+      <a class="btn btn-outline-secondary" href="{% if invoice %}{% url 'billing:detail' invoice.pk %}{% else %}{% url 'billing:list' %}{% endif %}">Cancel</a>
     </form>
   </div>
 </div>

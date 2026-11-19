@@ -44,15 +44,30 @@ another user's clients, projects, tasks or invoices.
   done), overdue tasks soonest due first, your newest clients,
   projects and tasks, and quick links to add a client or a project —
   it never shows another user's counts or items
+- Invoice records: add, view, edit and delete your own invoices, with
+  a client, an optional project, a status (draft, sent, paid,
+  overdue), issue and due dates, and line items with quantity and
+  unit price — invoice numbers run in sequence per user (INV-0001,
+  INV-0002, ...) and the total is worked out from the line items; a
+  user can never see, edit or delete another user's invoices
+- Invoice status changes: one-click "Mark as sent" and "Mark as paid"
+  buttons on the invoice page — draft can move to sent or paid, sent
+  and overdue can move to paid, and paid is final; a move that is not
+  allowed changes nothing and shows an error; the status can also be
+  changed on the edit page
+- Invoice list status filter and CSV export: narrow the invoice list
+  to one status, and download your own invoices as a CSV file
+  (number, client, project, status, issue date, due date, total) —
+  the export follows the same status filter, and another user's
+  invoices never appear in it
 - Home page and health check
 - Responsive Bootstrap 5 interface
 
 ## Features planned (MVP)
 
 1. Role-aware access: owner/admin and regular team member
-2. Invoice creation with line items, subtotal, tax/discount, total, due date
-   and status
-3. CSV export for invoices or clients
+2. Invoice tax and discount on line items and totals
+3. CSV export for clients
 4. Validation, authorization checks and tests throughout
 5. Setup guide and sample/demo data command
 
@@ -137,10 +152,9 @@ clientflow-django/
 
 ## Limitations
 
-- Home page, health check, dashboard, sign-in pages, client records,
-  project records and task records only — no invoice features yet. The
-  client list has search, a company filter and pagination; other lists
-  do not yet.
+- Invoices have no tax or discount yet, and only invoices (not
+  clients) can be downloaded as a CSV file. The client list has
+  search, a company filter and pagination; other lists do not yet.
 - Bootstrap is loaded from a CDN, so the pages need internet access for
   full styling; the app itself still renders without it.
 - No CI workflow yet.

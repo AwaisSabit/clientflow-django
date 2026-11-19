@@ -22,6 +22,25 @@ class Invoice(models.Model):
         PAID = "paid", "Paid"
         OVERDUE = "overdue", "Overdue"
 
+    # One-click status changes on the invoice page may only move an
+    # invoice forward: draft -> sent, draft -> paid, sent -> paid,
+    # overdue -> paid. Paid is final — a paid invoice cannot be
+    # reopened with a one-click button. Overdue is set from the edit
+    # form, never by a one-click button. The edit form sets the
+    # status directly and does not enforce these transitions.
+    ALLOWED_STATUS_CHANGES = {
+        Status.DRAFT: {Status.SENT, Status.PAID},
+        Status.SENT: {Status.PAID},
+        Status.OVERDUE: {Status.PAID},
+        Status.PAID: set(),
+    }
+
+    def can_move_to(self, new_status):
+        """True when a one-click status change to new_status is allowed."""
+        return new_status in self.ALLOWED_STATUS_CHANGES.get(
+            self.status, set()
+        )
+
     number = models.CharField(
         max_length=20, blank=True, editable=False
     )
