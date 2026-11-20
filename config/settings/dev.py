@@ -1,6 +1,11 @@
 """Development settings: DEBUG on, localhost only, insecure defaults flagged."""
 import os
 
+# Tell the base settings this is a dev run before they load, so the
+# unsafe dev-only secret key below is allowed there. Dev settings
+# always mean DEBUG on, whatever the environment says.
+os.environ["DJANGO_DEBUG"] = "True"
+
 from .base import *  # noqa: F401,F403
 
 DEBUG = True

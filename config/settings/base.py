@@ -10,8 +10,20 @@ from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-dev-only-key")
 DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() in {"1", "true", "yes"}
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+if not SECRET_KEY:
+    if DEBUG:
+        # Dev only: a clearly-marked unsafe key so the project runs
+        # with no setup. Production settings refuse to start without
+        # a real key (see config/settings/prod.py), and this branch
+        # never runs when DEBUG is off.
+        SECRET_KEY = "unsafe-dev-only-key"
+    else:
+        raise ValueError(
+            "DJANGO_SECRET_KEY must be set when DEBUG is off — "
+            "there is no safe default for a live site"
+        )
 ALLOWED_HOSTS = [
     h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()
 ]

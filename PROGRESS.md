@@ -743,3 +743,125 @@ client, which the Day 6 note above had flagged as an open decision.
 
 ### Next steps
 - Sample data command and security review, per the plan.
+
+## Day 10 — 2026-11-20 (ClientFlow)
+
+### Done
+- Sample data command `seed_demo_data` in
+  `apps/dashboard/management/commands/seed_demo_data.py` — one
+  command populates the app for a new developer:
+  - Creates a demo user (`demo`, `demo@example.com`, password
+    `DemoPass123!`) with 3 clients (Sara Ahmed / The Bakehouse,
+    Bilal Khan / Print House, Ayesha Malik / Ayesha Events),
+    4 projects, 8 tasks across the projects (a mix of done, in
+    progress and to-do, with one overdue task) and 3 invoices in
+    draft, sent and paid states, with 5 line items between them.
+  - Safe and honest by design: it refuses to run when DEBUG is off
+    unless given `--force`, so demo data can never land in a real
+    deployment by accident; `--clear` deletes the demo user first
+    and the database cascades that to only the demo user's clients,
+    projects, tasks and invoices — nobody else's data is touched.
+  - Idempotent: every record is created with `get_or_create`
+    keyed on the demo user and its natural fields (client name,
+    project name, task title, invoice client and project), so a
+    second run reports 0 new records and changes nothing.
+  - Prints a short plain-English summary of what it created
+    ("Demo data ready: 3 clients (3 new), ...") and, when the demo
+    user is new, the login details.
+  - Verified by hand in development: first run creates everything,
+    second run creates nothing, `--clear` wipes the demo data and
+    seeds it fresh.
+- Security review — `manage.py check --deploy` run against the real
+  production settings, plus a manual audit of every view and the
+  settings files. Findings and fixes:
+  - HSTS was missing (warning W004): production settings now set
+    `SECURE_HSTS_SECONDS` to one year with
+    `SECURE_HSTS_INCLUDE_SUBDOMAINS`. Preload stays off on purpose
+    — joining the browser preload list is hard to undo — and the
+    deploy check's remaining W021 warning about that is recorded
+    in the tests as the one accepted warning.
+  - A short secret key was accepted in production (warning W009
+    only fired for the test key): production settings now refuse
+    to start with a key under 50 characters, as well as with no
+    key at all.
+  - The shared base settings carried a fallback secret key that a
+    deployment pointed at the base settings would have used with
+    DEBUG off: base settings now refuse to start without a key
+    when DEBUG is off, and the clearly-marked unsafe dev key is
+    only used when DEBUG is on. Development settings state this
+    before the base settings load.
+  - Cookie and header hardening in production settings: CSRF
+    cookie hidden from JavaScript (`CSRF_COOKIE_HTTPONLY`, safe
+    here because no script reads the cookie — forms carry the
+    token), `SECURE_CONTENT_TYPE_NOSNIFF` and a same-origin
+    referrer policy set explicitly.
+  - Already sound, verified rather than changed: DEBUG is off and
+    `ALLOWED_HOSTS` is mandatory in production; all four password
+    validators are on; `SecurityMiddleware`,
+    `CsrfViewMiddleware` and `XFrameOptionsMiddleware` are in the
+    middleware (clickjacking protection defaults to deny);
+    `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` and
+    `SECURE_SSL_REDIRECT` were already set in production.
+  - Owner-scoping audit of every view: all client, project, task,
+    invoice and dashboard lookups filter on `owner=request.user`
+    (checked by reading each view), so no view leaks another
+    user's data — the invoice CSV export and the dashboard counts,
+    overdue list and recent lists are owner-scoped the same way.
+    The profile page only ever touches `request.user`. The
+    password-reset email template uses `{% autoescape off %}`,
+    which is Django's own standard template for that email and
+    carries only the site address, not user input. The admin
+    shows all users' records to staff only, which is Django's
+    normal admin behaviour.
+  - Error pages: there were no custom 404/500 templates, so
+    `templates/404.html` and `templates/500.html` were added —
+    plain pages that never show a stack trace (verified by tests
+    that hit both pages with DEBUG off).
+- README updated: the demo data command and the security review
+  moved to "Features that work now"; the demo command left the
+  planned list; the limitations now warn that the demo command is
+  for local development only and the demo password is published.
+  No day numbers anywhere in the README.
+
+### Test results (Day 10)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 194 tests, all passed (181 existing +
+  13 new: 7 in `tests/test_seed_demo_data.py`, 6 in
+  `tests/test_security.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- `manage.py check --deploy` with the real production settings
+  and a proper 50-character key: only the deliberate HSTS-preload
+  warning (W021) remains.
+- New seed tests cover: the command creates the demo user (with a
+  working password) plus 3 clients, 4 projects, 8 tasks, 3 invoices
+  and 5 line items, with the records linked correctly; the demo
+  user can sign in and sees the seeded clients on the dashboard;
+  running twice creates nothing new; `--clear` removes the demo
+  user's data (including a record made outside the seed data) and
+  reseeds it fresh, while another user's client survives untouched;
+  `--clear` with no demo user says so; the command refuses when
+  DEBUG is off without `--force` and creates nothing; `--force`
+  allows it when DEBUG is off.
+- New security tests cover: the deploy check passes with the real
+  production settings (only the accepted W021 warning); production
+  settings refuse a short key and a missing key; the base settings
+  refuse to start without a key when DEBUG is off; the custom 404
+  page renders for an unknown address and the custom 500 page
+  renders for a failing view, both with DEBUG off and neither
+  showing a traceback or the error message.
+- Three real test mistakes were found and fixed while running
+  them: the seed tests first ran with DEBUG off (the test runner
+  forces it off, so the command refused — the tests now switch
+  DEBUG back on); the line-item count was 5, not 6 as first
+  written; and the 500 test first used a bare test URLconf that
+  could not reverse the home page link in the base template, so
+  the real URLconf is included in it. The command and the
+  settings were right in each case.
+
+### Commits (local only)
+- See `git log` in the project repo (3 real commits, in plain
+  English).
+
+### Next steps
+- Invoice tax and discount, per the plan.

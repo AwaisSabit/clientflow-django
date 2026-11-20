@@ -60,6 +60,17 @@ another user's clients, projects, tasks or invoices.
   (number, client, project, status, issue date, due date, total) —
   the export follows the same status filter, and another user's
   invoices never appear in it
+- Demo data command: `python manage.py seed_demo_data` creates a
+  demo user (`demo`, password `DemoPass123!`) with 3 clients,
+  4 projects, 8 tasks and 3 invoices, so a new developer can see the
+  app populated with one command — running it twice never duplicates
+  anything, `--clear` wipes only the demo user's data first, and it
+  refuses to run when DEBUG is off unless given `--force`
+- Security review: production settings require a secret key of at
+  least 50 characters and a non-empty allowed-hosts list, turn on
+  secure session and CSRF cookies, force HTTPS with HSTS (one year,
+  subdomains included), and refuse to guess content types; friendly
+  404 and 500 pages never show a stack trace
 - Home page and health check
 - Responsive Bootstrap 5 interface
 
@@ -69,7 +80,6 @@ another user's clients, projects, tasks or invoices.
 2. Invoice tax and discount on line items and totals
 3. CSV export for clients
 4. Validation, authorization checks and tests throughout
-5. Setup guide and sample/demo data command
 
 Out of scope for v1.0.0: payment gateway integration, complex accounting,
 multi-currency tax compliance, mobile app, enterprise multi-tenant billing.
@@ -157,4 +167,8 @@ clientflow-django/
   search, a company filter and pagination; other lists do not yet.
 - Bootstrap is loaded from a CDN, so the pages need internet access for
   full styling; the app itself still renders without it.
+- The demo data command is for local development only: it refuses to
+  run when DEBUG is off unless given `--force`, and the demo account
+  uses a fixed, published password — never seed demo data on a live
+  site.
 - No CI workflow yet.
