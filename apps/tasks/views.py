@@ -11,6 +11,7 @@ belongs to someone else.
 """
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import F
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -19,10 +20,20 @@ from apps.projects.models import Project
 from .forms import TaskForm
 from .models import Task
 
+TASKS_PER_PAGE = 10
+
 
 def _get_task(request, pk):
-    """Fetch one of the signed-in user's tasks, or 404."""
-    return get_object_or_404(Task, pk=pk, owner=request.user)
+    """Fetch one of the signed-in user's tasks, or 404.
+
+    The project and assignee come along in the same query, so the
+    detail page never asks the database again for them.
+    """
+    return get_object_or_404(
+        Task.objects.select_related("project", "assignee"),
+        pk=pk,
+        owner=request.user,
+    )
 
 
 def _get_project(request, project_pk):
@@ -33,16 +44,27 @@ def _get_project(request, project_pk):
 @login_required
 def task_list(request, project_pk):
     """List the signed-in user's tasks for one project, soonest due
-    date first. Tasks without a due date come last, then newest first.
+    date first, 10 per page. Tasks without a due date come last,
+    then newest first.
     """
     project = _get_project(request, project_pk)
     tasks = (
         Task.objects.filter(project=project, owner=request.user)
-        .select_related("project")
+        .select_related("project", "assignee")
         .order_by(F("due_date").asc(nulls_last=True), "-created")
     )
+    paginator = Paginator(tasks, TASKS_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get("page"))
     return render(
-        request, "tasks/list.html", {"tasks": tasks, "project": project}
+        request,
+        "tasks/list.html",
+        {
+            "tasks": page_obj,
+            "page_obj": page_obj,
+            "total_count": paginator.count,
+            "query_string": "",
+            "project": project,
+        },
     )
 
 

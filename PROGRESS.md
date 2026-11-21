@@ -865,3 +865,107 @@ client, which the Day 6 note above had flagged as an open decision.
 
 ### Next steps
 - Invoice tax and discount, per the plan.
+
+## Day 11 — 2026-11-21 (ClientFlow)
+
+### Done
+- Pagination on the invoice, project and task lists, 10 items per
+  page, matching the client list:
+  - `apps/billing/views.py` — the invoice list now paginates with
+    `Paginator.get_page`, so an out-of-range page shows the last
+    page instead of an error. The page links keep the status
+    filter, and the list shows a result count ("12 invoices").
+  - `apps/projects/views.py` — the project list now paginates the
+    same way, with a result count.
+  - `apps/tasks/views.py` — the per-project task list now
+    paginates the same way, with a result count. Owner-scoping and
+    the existing empty states are unchanged on all three lists.
+  - `templates/includes/pagination.html` — one shared page-control
+    snippet (Previous/Next and page numbers) used by the three
+    lists, instead of the same markup three times. The CSV export
+    still exports every invoice, not just the first page.
+- Query optimisation — every list, detail and dashboard page now
+  loads its related records in a fixed number of queries, however
+  many rows there are (measured with 12 tasks, 6 of them assigned,
+  and 12 invoices with 2 line items each; the numbers below are
+  one full page load each, session and sign-in included):
+  - Invoice CSV export: 15 queries down to 4 — the line items are
+    now prefetched instead of fetched once per invoice.
+  - Invoice detail: 8 down to 4 — the client, project and line
+    items come along with the invoice.
+  - Dashboard: 19 down to 9 — the four task counts (total, to do,
+    in progress, done) now come from one aggregate query instead
+    of four separate counts, and the overdue and recent task lists
+    fetch their project in the same query.
+  - Task list: 10 down to 5 — the assignee is now fetched with the
+    task instead of once per assigned task.
+  - Project detail: 6 down to 4 — the client and the project's
+    tasks come along with the project.
+  - Client detail: 5 down to 4 — the client's projects come along
+    with the client.
+  - Invoice and project lists: 3 up to 4 — one extra count query
+    from the paginator, still fixed no matter how many rows there
+    are. The invoice list was already fetching its client and
+    project in the same query.
+  - Task detail now fetches its project and assignee in the same
+    query as the task.
+- README updated: the invoice, project and task lists now say they
+  are paginated, the limitations no longer say other lists lack
+  pagination, and the fixed-query loading is listed as a feature.
+  No day numbers anywhere in the README.
+
+### Test results (Day 11)
+- `python manage.py check` — passed, no issues.
+- `python manage.py test` — 250 tests, all passed (194 existing +
+  56 new: 16 in `tests/test_pagination.py`, 12 in
+  `tests/test_query_optimisation.py`, 13 in
+  `tests/test_billing_totals.py`, 15 in
+  `tests/test_task_state.py`).
+- `python manage.py makemigrations --check --dry-run` — no changes detected.
+- `git diff --check` — clean; no secrets found in the diff.
+- New pagination tests cover: the first page shows 10 items and
+  the second page the rest, in the right order, on all three lists;
+  an out-of-range page shows the last page and a page that is not a
+  number shows the first page; the invoice status filter and
+  pagination work together and the page links keep the filter;
+  pagination never shows another user's invoices, projects or
+  tasks; the empty states still show.
+- New query tests cover: loading the invoice list, project list,
+  task list, invoice detail, project detail, client detail, CSV
+  export and dashboard with 1 related row takes exactly as many
+  queries as with 12; and the exact counts are pinned for the
+  invoice list (4), invoice export (4), invoice detail (4) and
+  dashboard (9).
+- New billing tests cover: totals with fractional quantities and
+  prices (0.10 x 0.30 = 0.03), two-decimal quantities, totals as
+  Decimals, zero-quantity and zero-price lines adding nothing, five
+  line items summing correctly, a large amount (1000 x 999.99),
+  four-digit numbering up to INV-0012, numbering continuing from
+  the highest remaining invoice after a middle one is deleted,
+  deleting the newest invoice reusing its number, per-owner
+  numbering with many invoices, and the CSV export covering all
+  12 invoices, not just the first page.
+- New task-state tests cover: status moves through the edit page
+  (to do to in progress, in progress to done, done back to to do
+  and to in progress, to do straight to done), an invalid status
+  changing nothing, a status change keeping the priority and
+  assignee, assigning an unassigned task, reassigning a task,
+  rejecting a made-up assignee, a task due today not being
+  overdue, the overdue list showing all 7 overdue tasks (not just
+  five), counts right with 12 tasks, recent lists still capped at
+  five with 12 tasks, and marking a task done moving it between
+  the dashboard counts.
+- One test mistake was found and fixed while running them: the
+  status-change test first posted the form's default medium
+  priority and no assignee, then expected the task's high priority
+  and assignee to survive — the form posts every field, so what
+  was posted is what is saved. The test now posts the current
+  priority and assignee with the new status, and all 56 new tests
+  pass.
+
+### Commits (local only)
+- See `git log` in the project repo (3 real commits, in plain
+  English).
+
+### Next steps
+- Invoice tax and discount, per the plan.

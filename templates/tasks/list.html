@@ -6,6 +6,10 @@
   <a class="btn btn-primary" href="{% url 'projects:task-create' project.pk %}">Add a task</a>
 </div>
 
+{% if total_count %}
+  <p class="text-muted">{{ total_count }} task{{ total_count|pluralize }}</p>
+{% endif %}
+
 {% if tasks %}
   <div class="list-group">
     {% for task in tasks %}
@@ -21,6 +25,8 @@
       </a>
     {% endfor %}
   </div>
+
+  {% include "includes/pagination.html" with aria_label="Task pages" %}
 {% else %}
   <p class="text-muted">No tasks for this project yet. Add the first task to keep track of the work for this project.</p>
 {% endif %}

@@ -18,8 +18,16 @@ CLIENTS_PER_PAGE = 10
 
 
 def _get_client(request, pk):
-    """Fetch one of the signed-in user's clients, or 404."""
-    return get_object_or_404(Client, pk=pk, owner=request.user)
+    """Fetch one of the signed-in user's clients, or 404.
+
+    The client's projects come along in the same query, so the
+    detail page never asks the database once per project.
+    """
+    return get_object_or_404(
+        Client.objects.prefetch_related("projects"),
+        pk=pk,
+        owner=request.user,
+    )
 
 
 @login_required

@@ -28,14 +28,15 @@ another user's clients, projects, tasks or invoices.
   search and filter never show another user's clients
 - Task records: add, view, edit and delete your own tasks, with title,
   description, status (to do, in progress, done), an optional due date
-  and a linked project — the list lives under its project and shows the
-  soonest due date first, and a user can never see, edit or delete
-  another user's tasks, or attach a task to another user's project
+  and a linked project — the list lives under its project, 10 tasks per
+  page, and shows the soonest due date first, and a user can never see,
+  edit or delete another user's tasks, or attach a task to another
+  user's project
 - Project records: add, view, edit and delete your own projects, with
   name, description, status (active, on hold, completed), start and due
-  dates and a linked client — a user can never see, edit or delete
-  another user's projects, or attach a project to another user's
-  client; each client page lists that client's projects
+  dates and a linked client, 10 projects per page — a user can never see,
+  edit or delete another user's projects, or attach a project to another
+  user's client; each client page lists that client's projects
 - Task priority and assignee: every task has a priority (low, medium,
   high — medium by default) and can be assigned to a real user; the
   list shows priority badges and the detail page shows the assignee
@@ -55,11 +56,17 @@ another user's clients, projects, tasks or invoices.
   and overdue can move to paid, and paid is final; a move that is not
   allowed changes nothing and shows an error; the status can also be
   changed on the edit page
-- Invoice list status filter and CSV export: narrow the invoice list
-  to one status, and download your own invoices as a CSV file
+- Invoice list status filter, pagination and CSV export: narrow the
+  invoice list to one status, 10 invoices per page with the filter kept
+  in the page links, and download your own invoices as a CSV file
   (number, client, project, status, issue date, due date, total) —
-  the export follows the same status filter, and another user's
-  invoices never appear in it
+  the export covers every invoice, not just the first page, follows
+  the same status filter, and another user's invoices never appear
+  in it
+- Fast list, detail and dashboard pages: related records (clients,
+  projects, tasks, assignees and line items) are loaded in a fixed
+  number of queries, so a long list costs no more database trips
+  than a short one
 - Demo data command: `python manage.py seed_demo_data` creates a
   demo user (`demo`, password `DemoPass123!`) with 3 clients,
   4 projects, 8 tasks and 3 invoices, so a new developer can see the
@@ -163,8 +170,8 @@ clientflow-django/
 ## Limitations
 
 - Invoices have no tax or discount yet, and only invoices (not
-  clients) can be downloaded as a CSV file. The client list has
-  search, a company filter and pagination; other lists do not yet.
+  clients) can be downloaded as a CSV file. Every list is paginated
+  at 10 items per page.
 - Bootstrap is loaded from a CDN, so the pages need internet access for
   full styling; the app itself still renders without it.
 - The demo data command is for local development only: it refuses to

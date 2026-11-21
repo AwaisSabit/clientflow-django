@@ -9,26 +9,51 @@ a project can never be attached to a client that belongs to someone else.
 """
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ProjectForm
 from .models import Project
 
+PROJECTS_PER_PAGE = 10
+
 
 def _get_project(request, pk):
-    """Fetch one of the signed-in user's projects, or 404."""
-    return get_object_or_404(Project, pk=pk, owner=request.user)
+    """Fetch one of the signed-in user's projects, or 404.
+
+    The client and the project's tasks come along in the same
+    queries, so the detail page never asks the database once per
+    task.
+    """
+    return get_object_or_404(
+        Project.objects.select_related("client").prefetch_related(
+            "tasks"
+        ),
+        pk=pk,
+        owner=request.user,
+    )
 
 
 @login_required
 def project_list(request):
-    """List the signed-in user's projects, ordered by name."""
+    """List the signed-in user's projects, ordered by name, 10 per page."""
     projects = (
         Project.objects.filter(owner=request.user)
         .select_related("client")
         .order_by("name")
     )
-    return render(request, "projects/list.html", {"projects": projects})
+    paginator = Paginator(projects, PROJECTS_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return render(
+        request,
+        "projects/list.html",
+        {
+            "projects": page_obj,
+            "page_obj": page_obj,
+            "total_count": paginator.count,
+            "query_string": "",
+        },
+    )
 
 
 @login_required

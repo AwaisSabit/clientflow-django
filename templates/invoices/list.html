@@ -26,6 +26,10 @@
   </div>
 </form>
 
+{% if total_count %}
+  <p class="text-muted">{{ total_count }} invoice{{ total_count|pluralize }}</p>
+{% endif %}
+
 {% if invoices %}
   <div class="list-group">
     {% for invoice in invoices %}
@@ -38,6 +42,8 @@
       </a>
     {% endfor %}
   </div>
+
+  {% include "includes/pagination.html" with aria_label="Invoice pages" %}
 {% else %}
   {% if status_filter %}
     <p class="text-muted">No invoices with this status. <a href="{% url 'billing:list' %}">Show all invoices</a></p>

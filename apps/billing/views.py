@@ -13,6 +13,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -23,19 +24,32 @@ from .forms import (
 )
 from .models import Invoice
 
+INVOICES_PER_PAGE = 10
+
 
 def _get_invoice(request, pk):
-    """Fetch one of the signed-in user's invoices, or 404."""
-    return get_object_or_404(Invoice, pk=pk, owner=request.user)
+    """Fetch one of the signed-in user's invoices, or 404.
+
+    The client, project and line items come along in the same
+    queries, so the detail page never asks the database once per
+    line item.
+    """
+    return get_object_or_404(
+        Invoice.objects.select_related("client", "project")
+        .prefetch_related("items"),
+        pk=pk,
+        owner=request.user,
+    )
 
 
 @login_required
 def invoice_list(request):
-    """List the signed-in user's invoices, newest first.
+    """List the signed-in user's invoices, newest first, 10 per page.
 
     `status` narrows the list to one status (draft, sent, paid or
     overdue). Any other value is ignored and the full list is shown.
-    The filter only ever sees the signed-in user's own invoices.
+    The filter only ever sees the signed-in user's own invoices, and
+    the page links keep it.
     """
     status_filter = request.GET.get("status", "").strip()
     if status_filter not in Invoice.Status.values:
@@ -47,10 +61,26 @@ def invoice_list(request):
     )
     if status_filter:
         invoices = invoices.filter(status=status_filter)
+
+    paginator = Paginator(invoices, INVOICES_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    # The page links need the current status filter, but not the
+    # page number itself.
+    kept_params = request.GET.copy()
+    kept_params.pop("page", None)
+    query_string = kept_params.urlencode()
+
     return render(
         request,
         "invoices/list.html",
-        {"invoices": invoices, "status_filter": status_filter},
+        {
+            "invoices": page_obj,
+            "page_obj": page_obj,
+            "total_count": paginator.count,
+            "status_filter": status_filter,
+            "query_string": query_string,
+        },
     )
 
 
@@ -70,6 +100,7 @@ def invoice_export_csv(request):
     invoices = (
         Invoice.objects.filter(owner=request.user)
         .select_related("client", "project")
+        .prefetch_related("items")
         .order_by("-created")
     )
     if status_filter:

@@ -6,6 +6,10 @@
   <a class="btn btn-primary" href="{% url 'projects:create' %}">Add a project</a>
 </div>
 
+{% if total_count %}
+  <p class="text-muted">{{ total_count }} project{{ total_count|pluralize }}</p>
+{% endif %}
+
 {% if projects %}
   <div class="list-group">
     {% for project in projects %}
@@ -18,6 +22,8 @@
       </a>
     {% endfor %}
   </div>
+
+  {% include "includes/pagination.html" with aria_label="Project pages" %}
 {% else %}
   <p class="text-muted">No projects yet. Add your first project to keep track of the work you owe a client.</p>
 {% endif %}
